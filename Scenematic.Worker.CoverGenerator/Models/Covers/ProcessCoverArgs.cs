@@ -1,4 +1,4 @@
-﻿using Scenematic.Data.Models.DTOs.Covers;
+﻿using Scenematic.Data.Models.DTOs.Cover;
 
 namespace Scenematic.Worker.CoverGenerator.Models.Covers;
 
@@ -8,5 +8,5 @@ public record ProcessCoverArgs(
     string AlbumTitle,
     string AlbumArtist,
     string AlbumCoverImageUrl,
-    List<GenerateCoverVoteDto> CoverVotes
+    List<CoverVoteDto> CoverVotes
 );

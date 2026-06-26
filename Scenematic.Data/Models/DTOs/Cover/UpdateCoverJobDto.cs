@@ -1,8 +1,8 @@
 ﻿using Scenematic.Common.Enums;
 
-namespace Scenematic.Data.Models.DTOs.Covers;
+namespace Scenematic.Data.Models.DTOs.Cover;
 
-public class UpdateGenerateCoverDto(
+public class UpdateCoverJobDto(
     GenerateCoverJobState state,
     DateTime? queuedAt,
     DateTime? startedAt,

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Scenematic.Common.Enums;
-using Scenematic.Data.Models.DTOs.Covers;
-using Scenematic.Data.Models.Entities.Covers;
+using Scenematic.Data.Models.DTOs.Cover;
+using Scenematic.Data.Models.Entities.Cover;
 using Scenematic.Data.Postgres.Data;
 using Scenematic.Data.Repositories;
 
@@ -9,11 +9,11 @@ namespace Scenematic.Data.Postgres.Repositories;
 
 public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJobRepository
 {
-    public async Task<GenerateCoverJob> RegisterAsync(RegisterGenerateCoverDto dto)
+    public async Task<CoverJob> RegisterAsync(RegisterCoverJobDto jobDto)
     {
-        var job = new GenerateCoverJob()
+        var job = new CoverJob()
         {
-            CoverMetaHash = dto.MetaHash,
+            CoverMetaHash = jobDto.MetaHash,
             State = GenerateCoverJobState.Pending,
             CreatedAt = DateTime.UtcNow,
         };
@@ -23,10 +23,10 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
 
         var meta = new CoverMeta()
         {
-            AlbumTitle = dto.AlbumTitle,
-            AlbumArtist = dto.AlbumArtist,
-            AlbumCoverImageUrl = dto.AlbumCoverImageUrl,
-            CoverVotes = dto.CoverVotes.ConvertAll(cv => new CoverVoteMeta()
+            AlbumTitle = jobDto.AlbumTitle,
+            AlbumArtist = jobDto.AlbumArtist,
+            AlbumCoverImageUrl = jobDto.AlbumCoverImageUrl,
+            CoverVotes = jobDto.CoverVotes.ConvertAll(cv => new CoverVoteMeta()
             {
                 VoteLevel = cv.VoteLevel,
                 AvatarUrl = cv.AvatarUrl
@@ -39,7 +39,7 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
         return job;
     }
 
-    public async Task<GenerateCoverJob?> GetByIdAsync(
+    public async Task<CoverJob?> GetByIdAsync(
         Guid id,
         bool includeMetadata = false,
         bool includeResults = false
@@ -62,7 +62,7 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
         return await query.FirstOrDefaultAsync(j => j.Id == id);
     }
 
-    public async Task<GenerateCoverJob?> GetByMetaHashAsync(
+    public async Task<CoverJob?> GetByMetaHashAsync(
         string metaHash,
         bool includeMetadata = false,
         bool includeResults = false
@@ -85,17 +85,17 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
         return await query.FirstOrDefaultAsync(j => j.CoverMetaHash == metaHash);
     }
 
-    public async Task<bool> UpdateAsync(Guid id, UpdateGenerateCoverDto dto)
+    public async Task<bool> UpdateAsync(Guid id, UpdateCoverJobDto jobDto)
     {
         var job = await context.GenerateCoverJobs.FirstOrDefaultAsync(j => j.Id == id);
         if (job is null) return false;
 
-        job.State = dto.State;
+        job.State = jobDto.State;
 
-        job.QueuedAt ??= dto.QueuedAt;
-        job.StartedAt ??= dto.StartedAt;
-        job.CompletedAt ??= dto.CompletedAt;
-        job.FailedAt ??= dto.FailedAt;
+        job.QueuedAt ??= jobDto.QueuedAt;
+        job.StartedAt ??= jobDto.StartedAt;
+        job.CompletedAt ??= jobDto.CompletedAt;
+        job.FailedAt ??= jobDto.FailedAt;
 
         await context.SaveChangesAsync();
         return true;
@@ -109,12 +109,12 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
         return result is not null;
     }
 
-    public async Task<GenerateCoverJobSuccessResult?> SetSuccessAsync(Guid id, SetGenerateCoverJobSuccessDto dto)
+    public async Task<CoverJobSuccess?> SetSuccessAsync(Guid id, SetCoverJobSuccessDto dto)
     {
         var job = await context.GenerateCoverJobs.FirstOrDefaultAsync(j => j.Id == id);
         if (job is null) return null;
 
-        var result = new GenerateCoverJobSuccessResult()
+        var result = new CoverJobSuccess()
         {
             JobId = id,
             MainCoverPath = dto.MainCoverPath,
@@ -136,12 +136,12 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
         return result is not null;
     }
 
-    public async Task<GenerateCoverJobFailureResult?> SetFailureAsync(Guid id, SetGenerateCoverJobFailureDto dto)
+    public async Task<CoverJobFailure?> SetFailureAsync(Guid id, SetCoverJobFailureDto dto)
     {
         var job = await context.GenerateCoverJobs.FirstOrDefaultAsync(j => j.Id == id);
         if (job is null) return null;
 
-        var result = new GenerateCoverJobFailureResult()
+        var result = new CoverJobFailure()
         {
             JobId = id,
             FailureReason = dto.FailureReason,

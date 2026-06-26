@@ -1,22 +1,22 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Scenematic.Common.Enums;
 
-namespace Scenematic.Data.Models.Entities.Covers;
+namespace Scenematic.Data.Models.Entities.Cover;
 
-public class GenerateCoverJob
+public class CoverJob
 {
     public Guid Id { get; init; }
 
     public Guid? CoverMetaId { get; set; }
     public CoverMeta? CoverMeta { get; set; }
 
+    [MaxLength(128)]
     public string CoverMetaHash { get; init; } = null!;
 
-    [Required]
     public GenerateCoverJobState State { get; set; }
 
-    public GenerateCoverJobSuccessResult? SuccessResult { get; set; }
-    public GenerateCoverJobFailureResult? FailureResult { get; set; }
+    public CoverJobSuccess? SuccessResult { get; set; }
+    public CoverJobFailure? FailureResult { get; set; }
 
     [Required]
     public DateTime CreatedAt { get; init; }

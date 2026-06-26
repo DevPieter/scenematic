@@ -1,8 +1,8 @@
 ﻿using Scenematic.Common.Enums;
 
-namespace Scenematic.Data.Models.DTOs.Covers;
+namespace Scenematic.Data.Models.DTOs.Cover;
 
-public record SetGenerateCoverJobFailureDto(
+public record SetCoverJobFailureDto(
     GenerateCoverJobFailureReason FailureReason,
     string? ErrorMessage
 );

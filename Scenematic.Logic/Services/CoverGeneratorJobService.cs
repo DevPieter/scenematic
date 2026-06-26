@@ -3,8 +3,8 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Scenematic.Common.Enums;
 using Scenematic.Common.Models.Common;
-using Scenematic.Data.Models.DTOs.Covers;
-using Scenematic.Data.Models.Entities.Covers;
+using Scenematic.Data.Models.DTOs.Cover;
+using Scenematic.Data.Models.Entities.Cover;
 using Scenematic.Data.Repositories;
 
 namespace Scenematic.Logic.Services;
@@ -18,7 +18,7 @@ public class CoverGeneratorJobService(
         string albumTitle,
         string albumArtist,
         string albumCoverImageUrl,
-        List<GenerateCoverVoteDto> coverVotes
+        List<CoverVoteDto> coverVotes
     )
     {
         var voteStr = string.Join("|",
@@ -30,21 +30,21 @@ public class CoverGeneratorJobService(
         return Convert.ToBase64String(hashBytes);
     }
 
-    public async Task<ResultObject<GenerateCoverJob>> RegisterAsync(RegisterGenerateCoverDto dto)
+    public async Task<ResultObject<CoverJob>> RegisterAsync(RegisterCoverJobDto jobDto)
     {
         try
         {
-            var job = await repository.RegisterAsync(dto);
-            return ResultObject<GenerateCoverJob>.Success(job);
+            var job = await repository.RegisterAsync(jobDto);
+            return ResultObject<CoverJob>.Success(job);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to register cover generation job");
-            return ResultObject<GenerateCoverJob>.InternalError("Failed to register cover generation job");
+            return ResultObject<CoverJob>.InternalError("Failed to register cover generation job");
         }
     }
 
-    public async Task<ResultObject<GenerateCoverJob>> GetByIdAsync(
+    public async Task<ResultObject<CoverJob>> GetByIdAsync(
         Guid jobId,
         bool includeMetadata = false,
         bool includeResults = false
@@ -55,17 +55,17 @@ public class CoverGeneratorJobService(
             var job = await repository.GetByIdAsync(jobId, includeMetadata, includeResults);
 
             return job is null
-                ? ResultObject<GenerateCoverJob>.NotFound("Job not found")
-                : ResultObject<GenerateCoverJob>.Success(job);
+                ? ResultObject<CoverJob>.NotFound("Job not found")
+                : ResultObject<CoverJob>.Success(job);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to get cover generation job by id {JobId}", jobId);
-            return ResultObject<GenerateCoverJob>.InternalError("Failed to get cover generation job");
+            return ResultObject<CoverJob>.InternalError("Failed to get cover generation job");
         }
     }
 
-    public async Task<ResultObject<GenerateCoverJob>> GetByMetaHashAsync(
+    public async Task<ResultObject<CoverJob>> GetByMetaHashAsync(
         string metaHash,
         bool includeMetadata = false,
         bool includeResults = false
@@ -76,13 +76,13 @@ public class CoverGeneratorJobService(
             var job = await repository.GetByMetaHashAsync(metaHash, includeMetadata, includeResults);
 
             return job is null
-                ? ResultObject<GenerateCoverJob>.NotFound("Job not found")
-                : ResultObject<GenerateCoverJob>.Success(job);
+                ? ResultObject<CoverJob>.NotFound("Job not found")
+                : ResultObject<CoverJob>.Success(job);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to get cover generation job by meta hash {MetaHash}", metaHash);
-            return ResultObject<GenerateCoverJob>.InternalError("Failed to get cover generation job");
+            return ResultObject<CoverJob>.InternalError("Failed to get cover generation job");
         }
     }
 
@@ -152,7 +152,7 @@ public class CoverGeneratorJobService(
             var job = await repository.GetByIdAsync(jobId);
             if (job is null) return Result.NotFound("Job not found");
 
-            var result = await repository.SetSuccessAsync(jobId, new SetGenerateCoverJobSuccessDto(
+            var result = await repository.SetSuccessAsync(jobId, new SetCoverJobSuccessDto(
                 MainCoverPath: mainCoverPath,
                 DebounceCoverPath: debounceCoverPath,
                 ProcessingCoverPath: processingCoverPath
@@ -205,7 +205,7 @@ public class CoverGeneratorJobService(
             var job = await repository.GetByIdAsync(jobId);
             if (job is null) return Result.NotFound("Job not found");
 
-            var result = await repository.SetFailureAsync(jobId, new SetGenerateCoverJobFailureDto(
+            var result = await repository.SetFailureAsync(jobId, new SetCoverJobFailureDto(
                 FailureReason: reason,
                 ErrorMessage: errorMessage
             ));
@@ -239,7 +239,7 @@ public class CoverGeneratorJobService(
         }
     }
 
-    private static UpdateGenerateCoverDto ToUpdateDto(GenerateCoverJob job) => new(
+    private static UpdateCoverJobDto ToUpdateDto(CoverJob job) => new(
         state: job.State,
         queuedAt: job.QueuedAt,
         startedAt: job.StartedAt,
