@@ -1,8 +1,8 @@
 ﻿using Scenematic.Common.Enums.Songs;
 
-namespace Scenematic.Data.Models.DTOs.Covers;
+namespace Scenematic.Data.Models.DTOs.Cover;
 
-public record GenerateCoverVoteDto(
+public record CoverVoteDto(
     SongVoteLevel VoteLevel,
     string AvatarUrl
 );

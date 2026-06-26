@@ -1,6 +1,6 @@
 using MassTransit;
 using Scalar.AspNetCore;
-using Scenematic.Data.Models.DTOs.Covers;
+using Scenematic.Data.Models.DTOs.Cover;
 using Scenematic.Data.Postgres.Extensions;
 using Scenematic.Logic.Services;
 using Scenematic.Queue;
@@ -51,10 +51,10 @@ app.MapControllers();
 app.MapPost("generate-cover", async (
     CoverGeneratorJobService jobService,
     ISendEndpointProvider sendEndpointProvider,
-    RegisterGenerateCoverDto? inDto
+    RegisterGenerateCoverJobDto? inDto
 ) =>
 {
-    inDto ??= new RegisterGenerateCoverDto(
+    inDto ??= new RegisterGenerateCoverJobDto(
         "",
         "UNSTOPPABLE",
         "The Purge, Omnya & Iris Goes",

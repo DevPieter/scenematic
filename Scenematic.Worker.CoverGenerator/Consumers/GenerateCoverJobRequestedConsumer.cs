@@ -1,7 +1,7 @@
 using MassTransit;
 using Scenematic.Common.Enums;
 using Scenematic.Common.Enums.Common;
-using Scenematic.Data.Models.DTOs.Covers;
+using Scenematic.Data.Models.DTOs.Cover;
 using Scenematic.Logic.Services;
 using Scenematic.Worker.CoverGenerator.Models.Covers;
 using Scenematic.Worker.CoverGenerator.Processors;
@@ -170,7 +170,7 @@ public class GenerateCoverJobRequestedConsumer(
                 AlbumTitle: job.CoverMeta.AlbumTitle,
                 AlbumArtist: job.CoverMeta.AlbumArtist,
                 AlbumCoverImageUrl: job.CoverMeta.AlbumCoverImageUrl,
-                CoverVotes: job.CoverMeta.CoverVotes.Select(cv => new GenerateCoverVoteDto(
+                CoverVotes: job.CoverMeta.CoverVotes.Select(cv => new CoverVoteDto(
                     cv.VoteLevel,
                     cv.AvatarUrl
                 )).ToList()

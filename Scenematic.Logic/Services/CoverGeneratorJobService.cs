@@ -3,8 +3,8 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Scenematic.Common.Enums;
 using Scenematic.Common.Models.Common;
-using Scenematic.Data.Models.DTOs.Covers;
-using Scenematic.Data.Models.Entities.Covers;
+using Scenematic.Data.Models.DTOs.Cover;
+using Scenematic.Data.Models.Entities.Cover;
 using Scenematic.Data.Repositories;
 
 namespace Scenematic.Logic.Services;
@@ -18,7 +18,7 @@ public class CoverGeneratorJobService(
         string albumTitle,
         string albumArtist,
         string albumCoverImageUrl,
-        List<GenerateCoverVoteDto> coverVotes
+        List<CoverVoteDto> coverVotes
     )
     {
         var voteStr = string.Join("|",
@@ -30,11 +30,11 @@ public class CoverGeneratorJobService(
         return Convert.ToBase64String(hashBytes);
     }
 
-    public async Task<ResultObject<GenerateCoverJob>> RegisterAsync(RegisterGenerateCoverDto dto)
+    public async Task<ResultObject<GenerateCoverJob>> RegisterAsync(RegisterGenerateCoverJobDto jobDto)
     {
         try
         {
-            var job = await repository.RegisterAsync(dto);
+            var job = await repository.RegisterAsync(jobDto);
             return ResultObject<GenerateCoverJob>.Success(job);
         }
         catch (Exception ex)
@@ -239,7 +239,7 @@ public class CoverGeneratorJobService(
         }
     }
 
-    private static UpdateGenerateCoverDto ToUpdateDto(GenerateCoverJob job) => new(
+    private static UpdateGenerateCoverJobDto ToUpdateDto(GenerateCoverJob job) => new(
         state: job.State,
         queuedAt: job.QueuedAt,
         startedAt: job.StartedAt,

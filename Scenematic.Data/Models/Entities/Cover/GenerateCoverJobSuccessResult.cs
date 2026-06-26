@@ -1,18 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Scenematic.Data.Models.Entities.Covers;
+namespace Scenematic.Data.Models.Entities.Cover;
 
 public class GenerateCoverJobSuccessResult
 {
-    [Required]
     public Guid JobId { get; init; }
 
-    [Required]
+    [MaxLength(256)]
     public string MainCoverPath { get; init; } = null!;
 
-    [Required]
+    [MaxLength(256)]
     public string DebounceCoverPath { get; init; } = null!;
 
-    [Required]
+    [MaxLength(256)]
     public string ProcessingCoverPath { get; init; } = null!;
 }

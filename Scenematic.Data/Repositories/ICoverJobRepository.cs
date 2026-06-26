@@ -1,11 +1,13 @@
-﻿using Scenematic.Data.Models.DTOs.Covers;
-using Scenematic.Data.Models.Entities.Covers;
+﻿using Scenematic.Data.Models.DTOs.Cover;
+using Scenematic.Data.Models.Entities.Cover;
 
 namespace Scenematic.Data.Repositories;
 
 public interface ICoverJobRepository
 {
-    Task<GenerateCoverJob> RegisterAsync(RegisterGenerateCoverDto dto);
+    Task<GenerateCoverJob> RegisterAsync(
+        RegisterGenerateCoverJobDto jobDto
+    );
 
     Task<GenerateCoverJob?> GetByIdAsync(
         Guid id,
@@ -19,13 +21,30 @@ public interface ICoverJobRepository
         bool includeResults = false
     );
 
-    Task<bool> UpdateAsync(Guid id, UpdateGenerateCoverDto dto);
+    Task<bool> UpdateAsync(
+        Guid id,
+        UpdateGenerateCoverJobDto jobDto
+    );
 
-    Task<bool> HasSuccessAsync(Guid id);
-    Task<GenerateCoverJobSuccessResult?> SetSuccessAsync(Guid id, SetGenerateCoverJobSuccessDto dto);
+    Task<bool> HasSuccessAsync(
+        Guid id
+    );
 
-    Task<bool> HasFailureAsync(Guid id);
-    Task<GenerateCoverJobFailureResult?> SetFailureAsync(Guid id, SetGenerateCoverJobFailureDto dto);
+    Task<GenerateCoverJobSuccessResult?> SetSuccessAsync(
+        Guid id,
+        SetGenerateCoverJobSuccessDto dto
+    );
 
-    Task<bool> DeleteMetaAsync(Guid id);
+    Task<bool> HasFailureAsync(
+        Guid id
+    );
+
+    Task<GenerateCoverJobFailureResult?> SetFailureAsync(
+        Guid id,
+        SetGenerateCoverJobFailureDto dto
+    );
+
+    Task<bool> DeleteMetaAsync(
+        Guid id
+    );
 }

@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Scenematic.Data.Models.Entities.Covers;
+using Scenematic.Data.Models.Entities.Cover;
 
 namespace Scenematic.Data.Postgres.Data;
 

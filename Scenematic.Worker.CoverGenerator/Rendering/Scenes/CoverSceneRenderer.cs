@@ -2,7 +2,7 @@
 using SkiaSharp;
 using Scenematic.Common.Enums.Songs;
 using Scenematic.Common.Extensions;
-using Scenematic.Data.Models.DTOs.Covers;
+using Scenematic.Data.Models.DTOs.Cover;
 
 namespace Scenematic.Worker.CoverGenerator.Rendering.Scenes;
 
@@ -31,7 +31,7 @@ public class CoverSceneRenderer : ISceneRenderer
 
     private readonly string _title;
     private readonly string _author;
-    private readonly List<GenerateCoverVoteDto> _votes;
+    private readonly List<CoverVoteDto> _votes;
 
     private readonly SKSamplingOptions _samplingOptions;
 
@@ -70,7 +70,7 @@ public class CoverSceneRenderer : ISceneRenderer
     public CoverSceneRenderer(
         string title,
         string author,
-        List<GenerateCoverVoteDto> votes,
+        List<CoverVoteDto> votes,
         SKImage coverImage,
         Dictionary<string, SKImage> avatarImages
     )
@@ -368,7 +368,7 @@ public class CoverSceneRenderer : ISceneRenderer
 
     private void DrawAvatarChip(
         SKCanvas canvas,
-        GenerateCoverVoteDto vote,
+        CoverVoteDto vote,
         SKPoint center,
         float size,
         SKColor levelColor,

@@ -1,4 +1,4 @@
-﻿namespace Scenematic.Data.Models.DTOs.Covers;
+﻿namespace Scenematic.Data.Models.DTOs.Cover;
 
 public record SetGenerateCoverJobSuccessDto(
     string MainCoverPath,
