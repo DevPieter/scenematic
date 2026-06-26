@@ -3,7 +3,7 @@ using Scenematic.Common.Enums;
 
 namespace Scenematic.Data.Models.Entities.Cover;
 
-public class GenerateCoverJobFailureResult
+public class CoverJobFailure
 {
     public Guid JobId { get; init; }
 

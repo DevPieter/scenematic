@@ -1,6 +1,6 @@
 ﻿namespace Scenematic.Data.Models.DTOs.Cover;
 
-public record RegisterGenerateCoverJobDto(
+public record RegisterCoverJobDto(
     string MetaHash,
     string AlbumTitle,
     string AlbumArtist,

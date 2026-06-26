@@ -2,7 +2,7 @@
 
 namespace Scenematic.Data.Models.Entities.Cover;
 
-public class GenerateCoverJobSuccessResult
+public class CoverJobSuccess
 {
     public Guid JobId { get; init; }
 

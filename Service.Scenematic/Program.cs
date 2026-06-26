@@ -51,10 +51,10 @@ app.MapControllers();
 app.MapPost("generate-cover", async (
     CoverGeneratorJobService jobService,
     ISendEndpointProvider sendEndpointProvider,
-    RegisterGenerateCoverJobDto? inDto
+    RegisterCoverJobDto? inDto
 ) =>
 {
-    inDto ??= new RegisterGenerateCoverJobDto(
+    inDto ??= new RegisterCoverJobDto(
         "",
         "UNSTOPPABLE",
         "The Purge, Omnya & Iris Goes",

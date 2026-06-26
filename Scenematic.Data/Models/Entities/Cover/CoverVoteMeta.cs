@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Scenematic.Common.Annotations;
 using Scenematic.Common.Enums.Songs;
 
 namespace Scenematic.Data.Models.Entities.Cover;

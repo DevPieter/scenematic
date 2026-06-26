@@ -3,7 +3,7 @@ using Scenematic.Common.Enums;
 
 namespace Scenematic.Data.Models.Entities.Cover;
 
-public class GenerateCoverJob
+public class CoverJob
 {
     public Guid Id { get; init; }
 
@@ -15,8 +15,8 @@ public class GenerateCoverJob
 
     public GenerateCoverJobState State { get; set; }
 
-    public GenerateCoverJobSuccessResult? SuccessResult { get; set; }
-    public GenerateCoverJobFailureResult? FailureResult { get; set; }
+    public CoverJobSuccess? SuccessResult { get; set; }
+    public CoverJobFailure? FailureResult { get; set; }
 
     [Required]
     public DateTime CreatedAt { get; init; }

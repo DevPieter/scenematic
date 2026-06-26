@@ -2,7 +2,7 @@
 
 namespace Scenematic.Data.Models.DTOs.Cover;
 
-public class UpdateGenerateCoverJobDto(
+public class UpdateCoverJobDto(
     GenerateCoverJobState state,
     DateTime? queuedAt,
     DateTime? startedAt,

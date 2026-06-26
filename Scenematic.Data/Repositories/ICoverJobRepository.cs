@@ -5,17 +5,17 @@ namespace Scenematic.Data.Repositories;
 
 public interface ICoverJobRepository
 {
-    Task<GenerateCoverJob> RegisterAsync(
-        RegisterGenerateCoverJobDto jobDto
+    Task<CoverJob> RegisterAsync(
+        RegisterCoverJobDto jobDto
     );
 
-    Task<GenerateCoverJob?> GetByIdAsync(
+    Task<CoverJob?> GetByIdAsync(
         Guid id,
         bool includeMetadata = false,
         bool includeResults = false
     );
 
-    Task<GenerateCoverJob?> GetByMetaHashAsync(
+    Task<CoverJob?> GetByMetaHashAsync(
         string metaHash,
         bool includeMetadata = false,
         bool includeResults = false
@@ -23,25 +23,25 @@ public interface ICoverJobRepository
 
     Task<bool> UpdateAsync(
         Guid id,
-        UpdateGenerateCoverJobDto jobDto
+        UpdateCoverJobDto jobDto
     );
 
     Task<bool> HasSuccessAsync(
         Guid id
     );
 
-    Task<GenerateCoverJobSuccessResult?> SetSuccessAsync(
+    Task<CoverJobSuccess?> SetSuccessAsync(
         Guid id,
-        SetGenerateCoverJobSuccessDto dto
+        SetCoverJobSuccessDto dto
     );
 
     Task<bool> HasFailureAsync(
         Guid id
     );
 
-    Task<GenerateCoverJobFailureResult?> SetFailureAsync(
+    Task<CoverJobFailure?> SetFailureAsync(
         Guid id,
-        SetGenerateCoverJobFailureDto dto
+        SetCoverJobFailureDto dto
     );
 
     Task<bool> DeleteMetaAsync(

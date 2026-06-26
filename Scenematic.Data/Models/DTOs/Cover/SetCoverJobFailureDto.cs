@@ -2,7 +2,7 @@
 
 namespace Scenematic.Data.Models.DTOs.Cover;
 
-public record SetGenerateCoverJobFailureDto(
+public record SetCoverJobFailureDto(
     GenerateCoverJobFailureReason FailureReason,
     string? ErrorMessage
 );
