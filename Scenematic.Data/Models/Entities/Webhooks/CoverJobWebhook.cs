@@ -9,4 +9,17 @@ public class CoverJobWebhook
 
     public Guid WebhookId { get; init; }
     public Webhook Webhook { get; init; } = null!;
+
+    private CoverJobWebhook()
+    {
+    }
+
+    public CoverJobWebhook(
+        Guid jobId,
+        Guid webhookId
+    )
+    {
+        JobId = jobId;
+        WebhookId = webhookId;
+    }
 }

@@ -1,5 +1,7 @@
 ﻿using Scenematic.Data.Models.DTOs.Cover;
+using Scenematic.Data.Models.DTOs.Webhooks;
 using Scenematic.Data.Models.Entities.Cover;
+using Scenematic.Data.Models.Entities.Webhooks;
 
 namespace Scenematic.Data.Repositories;
 
@@ -7,6 +9,11 @@ public interface ICoverJobRepository
 {
     Task<CoverJob> RegisterAsync(
         RegisterCoverJobDto dto
+    );
+
+    Task<CoverJobWebhook?> RegisterWebhookAsync(
+        Guid jobId,
+        RegisterWebhookDto dto
     );
 
     Task<CoverJob?> GetByIdAsync(
@@ -21,6 +28,10 @@ public interface ICoverJobRepository
         bool includeMetadata = false,
         bool includeResults = false,
         bool includeWebhooks = false
+    );
+
+    Task<List<Webhook>> GetWebhooksAsync(
+        Guid jobId
     );
 
     Task<bool> UpdateAsync(

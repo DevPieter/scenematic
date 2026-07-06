@@ -7,6 +7,7 @@ using Scenematic.Queue;
 using Scenematic.Queue.Contracts.GenerateCoverJobs;
 using Scenematic.Queue.RabbitMQ.Extensions;
 using Scenematic.Queue.RabbitMQ.Options;
+using Service.Scenematic;
 using Service.Scenematic.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +37,7 @@ builder.Services.UseScenematicRabbitMq(
     }
 );
 
+builder.Services.AddHttpClient<WebhookService>();
 builder.Services.AddScoped<CoverGeneratorJobService>();
 
 var app = builder.Build();
@@ -51,33 +53,24 @@ app.MapControllers();
 app.MapPost("generate-cover", async (
     CoverGeneratorJobService jobService,
     ISendEndpointProvider sendEndpointProvider,
-    RegisterCoverJobDto? inDto
+    RegisterCoverRequest request
 ) =>
 {
-    inDto ??= new RegisterCoverJobDto(
-        "",
-        "UNSTOPPABLE",
-        "The Purge, Omnya & Iris Goes",
-        "https://m.media-amazon.com/images/I/51AmP27pHNL._AA500.jpg",
-        []
-    );
-
-    var dto = inDto with
-    {
-        MetaHash = CoverGeneratorJobService.GenerateCoverMetaHash(
-            inDto.AlbumTitle,
-            inDto.AlbumArtist,
-            inDto.AlbumCoverImageUrl,
-            inDto.CoverVotes
-        )
-    };
-
     var hash = CoverGeneratorJobService.GenerateCoverMetaHash(
-        dto.AlbumTitle,
-        dto.AlbumArtist,
-        dto.AlbumCoverImageUrl,
-        dto.CoverVotes
+        request.Title,
+        request.Artist,
+        request.CoverImageUrl,
+        request.CoverVotes
     );
+
+    var dto = new RegisterCoverJobDto(
+        MetaHash: hash,
+        AlbumTitle: request.Title,
+        AlbumArtist: request.Artist,
+        AlbumCoverImageUrl: request.CoverImageUrl,
+        CoverVotes: request.CoverVotes
+    );
+
     var existingJobResult = await jobService.GetByMetaHashAsync(hash, includeResults: true);
     if (existingJobResult.IsSuccess)
     {
@@ -115,6 +108,7 @@ app.MapPost("generate-cover", async (
     }
 
     var job = await jobService.RegisterAsync(dto);
+    var webhook = await jobService.RegisterWebhookAsync(job.Data.Id, request.CallbackUrl);
 
     await jobService.MarkQueuedAsync(job.Data.Id);
 
@@ -127,7 +121,13 @@ app.MapPost("generate-cover", async (
         {
             job.Data.Id,
             job.Data.State,
-            MetaHash = job.Data.CoverMetaHash
+            MetaHash = job.Data.CoverMetaHash,
+            Callback = new
+            {
+                webhook.Data.Url,
+                webhook.Data.Secret,
+                Header = "X-Webhook-Secret"
+            }
         }
     );
 });

@@ -4,7 +4,9 @@ using Microsoft.Extensions.Logging;
 using Scenematic.Common.Enums;
 using Scenematic.Common.Models.Common;
 using Scenematic.Data.Models.DTOs.Cover;
+using Scenematic.Data.Models.DTOs.Webhooks;
 using Scenematic.Data.Models.Entities.Cover;
+using Scenematic.Data.Models.Entities.Webhooks;
 using Scenematic.Data.Repositories;
 
 namespace Scenematic.Logic.Services;
@@ -30,6 +32,14 @@ public class CoverGeneratorJobService(
         return Convert.ToBase64String(hashBytes);
     }
 
+    // TODO - Move to crypto utils/service
+    public static string GenerateCryptoRandomHash(int length = 32)
+    {
+        var bytes = new byte[length];
+        RandomNumberGenerator.Fill(bytes);
+        return Convert.ToBase64String(bytes);
+    }
+
     public async Task<ResultObject<CoverJob>> RegisterAsync(RegisterCoverJobDto jobDto)
     {
         try
@@ -41,6 +51,31 @@ public class CoverGeneratorJobService(
         {
             logger.LogError(ex, "Failed to register cover generation job");
             return ResultObject<CoverJob>.InternalError("Failed to register cover generation job");
+        }
+    }
+
+    public async Task<ResultObject<Webhook>> RegisterWebhookAsync(
+        Guid jobId,
+        string webhookUrl
+    )
+    {
+        try
+        {
+            var secret = GenerateCryptoRandomHash();
+            var webhookDto = new RegisterWebhookDto(
+                Url: webhookUrl,
+                Secret: secret
+            );
+
+            var coverJobWebhook = await repository.RegisterWebhookAsync(jobId, webhookDto);
+            return coverJobWebhook is null
+                ? ResultObject<Webhook>.NotFound("Job not found")
+                : ResultObject<Webhook>.Success(coverJobWebhook.Webhook);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to register webhook for cover generation job {JobId}", jobId);
+            return ResultObject<Webhook>.InternalError("Failed to register webhook for cover generation job");
         }
     }
 

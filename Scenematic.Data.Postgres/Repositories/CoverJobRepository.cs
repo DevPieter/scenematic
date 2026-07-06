@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Scenematic.Data.Models.DTOs.Cover;
+using Scenematic.Data.Models.DTOs.Webhooks;
 using Scenematic.Data.Models.Entities.Cover;
+using Scenematic.Data.Models.Entities.Webhooks;
 using Scenematic.Data.Postgres.Data;
 using Scenematic.Data.Repositories;
 
@@ -14,31 +16,45 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
         await context.CoverJobs.AddAsync(job);
         await context.SaveChangesAsync();
 
-        try
-        {
-            var coverVotes = dto.CoverVotes.ConvertAll(cv => new CoverVoteMeta(
-                voteLevel: cv.VoteLevel,
-                avatarUrl: cv.AvatarUrl
-            ));
+        var coverVotes = dto.CoverVotes.ConvertAll(cv => new CoverVoteMeta(
+            voteLevel: cv.VoteLevel,
+            avatarUrl: cv.AvatarUrl
+        ));
 
-            var meta = new CoverMeta(
-                albumTitle: dto.AlbumTitle,
-                albumArtist: dto.AlbumArtist,
-                albumCoverImageUrl: dto.AlbumCoverImageUrl,
-                coverVotes: coverVotes
-            );
+        var meta = new CoverMeta(
+            albumTitle: dto.AlbumTitle,
+            albumArtist: dto.AlbumArtist,
+            albumCoverImageUrl: dto.AlbumCoverImageUrl,
+            coverVotes: coverVotes
+        );
 
-            job.CoverMeta = meta;
-            await context.SaveChangesAsync();
-        }
-        catch
-        {
-            context.CoverJobs.Remove(job);
-            await context.SaveChangesAsync();
-            throw;
-        }
+        await context.CoverMetas.AddAsync(meta);
+        job.CoverMeta = meta;
 
+        await context.SaveChangesAsync();
         return job;
+    }
+
+    public async Task<CoverJobWebhook?> RegisterWebhookAsync(Guid jobId, RegisterWebhookDto dto)
+    {
+        var job = await context.CoverJobs.FirstOrDefaultAsync(j => j.Id == jobId);
+        if (job is null) return null;
+
+        var webhook = new Webhook(
+            url: dto.Url,
+            secret: dto.Secret
+        );
+
+        var jobWebhook = new CoverJobWebhook(
+            jobId: jobId,
+            webhookId: webhook.Id
+        );
+
+        await context.Webhooks.AddAsync(webhook);
+        await context.CoverJobWebhooks.AddAsync(jobWebhook);
+        await context.SaveChangesAsync();
+
+        return jobWebhook;
     }
 
     public async Task<CoverJob?> GetByIdAsync(
@@ -98,6 +114,13 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
 
         return await query.FirstOrDefaultAsync(j => j.CoverMetaHash == metaHash);
     }
+
+    public async Task<List<Webhook>> GetWebhooksAsync(Guid jobId)
+        => await context.CoverJobWebhooks.AsNoTracking()
+            .Where(jw => jw.JobId == jobId)
+            .Include(jw => jw.Webhook)
+            .Select(jw => jw.Webhook)
+            .ToListAsync();
 
     public async Task<bool> UpdateAsync(Guid id, UpdateCoverJobDto jobDto)
     {
