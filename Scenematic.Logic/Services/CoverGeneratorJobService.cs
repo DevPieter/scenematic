@@ -52,7 +52,11 @@ public class CoverGeneratorJobService(
     {
         try
         {
-            var job = await repository.GetByIdAsync(jobId, includeMetadata, includeResults);
+            var job = await repository.GetByIdAsync(
+                id: jobId,
+                includeMetadata: includeMetadata,
+                includeResults: includeResults
+            );
 
             return job is null
                 ? ResultObject<CoverJob>.NotFound("Job not found")
@@ -73,7 +77,11 @@ public class CoverGeneratorJobService(
     {
         try
         {
-            var job = await repository.GetByMetaHashAsync(metaHash, includeMetadata, includeResults);
+            var job = await repository.GetByMetaHashAsync(
+                metaHash: metaHash,
+                includeMetadata: includeMetadata,
+                includeResults: includeResults
+            );
 
             return job is null
                 ? ResultObject<CoverJob>.NotFound("Job not found")

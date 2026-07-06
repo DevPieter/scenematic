@@ -5,7 +5,7 @@ namespace Scenematic.Data.Models.Entities.Cover;
 
 public class CoverVoteMeta
 {
-    public Guid Id { get; init; }
+    public Guid Id { get; init; } = Guid.NewGuid();
 
     public Guid CoverMetaId { get; init; }
     public CoverMeta CoverMeta { get; init; } = null!;
@@ -14,4 +14,14 @@ public class CoverVoteMeta
 
     [MaxLength(256)]
     public string AvatarUrl { get; init; } = null!;
+
+    private CoverVoteMeta()
+    {
+    }
+
+    public CoverVoteMeta(SongVoteLevel voteLevel, string avatarUrl)
+    {
+        VoteLevel = voteLevel;
+        AvatarUrl = avatarUrl;
+    }
 }

@@ -1,28 +1,29 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Scenematic.Common.Enums;
+using Scenematic.Data.Models.Entities.Jobs;
+using Scenematic.Data.Models.Entities.Webhooks;
 
 namespace Scenematic.Data.Models.Entities.Cover;
 
-public class CoverJob
+public class CoverJob : WebhookJob<CoverJobWebhook>
 {
-    public Guid Id { get; init; }
-
     public Guid? CoverMetaId { get; set; }
     public CoverMeta? CoverMeta { get; set; }
 
     [MaxLength(128)]
     public string CoverMetaHash { get; init; } = null!;
 
-    public GenerateCoverJobState State { get; set; }
+    public GenerateCoverJobState State { get; set; } = GenerateCoverJobState.Pending;
 
     public CoverJobSuccess? SuccessResult { get; set; }
     public CoverJobFailure? FailureResult { get; set; }
 
-    [Required]
-    public DateTime CreatedAt { get; init; }
+    private CoverJob()
+    {
+    }
 
-    public DateTime? QueuedAt { get; set; }
-    public DateTime? StartedAt { get; set; }
-    public DateTime? CompletedAt { get; set; }
-    public DateTime? FailedAt { get; set; }
+    public CoverJob(string coverMetaHash)
+    {
+        CoverMetaHash = coverMetaHash;
+    }
 }

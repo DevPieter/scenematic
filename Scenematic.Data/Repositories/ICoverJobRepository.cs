@@ -6,19 +6,21 @@ namespace Scenematic.Data.Repositories;
 public interface ICoverJobRepository
 {
     Task<CoverJob> RegisterAsync(
-        RegisterCoverJobDto jobDto
+        RegisterCoverJobDto dto
     );
 
     Task<CoverJob?> GetByIdAsync(
         Guid id,
         bool includeMetadata = false,
-        bool includeResults = false
+        bool includeResults = false,
+        bool includeWebhooks = false
     );
 
     Task<CoverJob?> GetByMetaHashAsync(
         string metaHash,
         bool includeMetadata = false,
-        bool includeResults = false
+        bool includeResults = false,
+        bool includeWebhooks = false
     );
 
     Task<bool> UpdateAsync(

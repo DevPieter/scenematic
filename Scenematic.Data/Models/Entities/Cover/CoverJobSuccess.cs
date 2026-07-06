@@ -14,4 +14,21 @@ public class CoverJobSuccess
 
     [MaxLength(256)]
     public string ProcessingCoverPath { get; init; } = null!;
+
+    private CoverJobSuccess()
+    {
+    }
+
+    public CoverJobSuccess(
+        Guid jobId,
+        string mainCoverPath,
+        string debounceCoverPath,
+        string processingCoverPath
+    )
+    {
+        JobId = jobId;
+        MainCoverPath = mainCoverPath;
+        DebounceCoverPath = debounceCoverPath;
+        ProcessingCoverPath = processingCoverPath;
+    }
 }

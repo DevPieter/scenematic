@@ -1,16 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Scenematic.Data.Models.Entities.Cover;
+using Scenematic.Data.Models.Entities.Webhooks;
 
 namespace Scenematic.Data.Postgres.Data;
 
 public class ScenematicNpgsqlDataContext(DbContextOptions<ScenematicNpgsqlDataContext> options) : DbContext(options)
 {
-    public DbSet<CoverJob> GenerateCoverJobs { get; set; } = null!;
-    public DbSet<CoverJobSuccess> GenerateCoverJobSuccessResults { get; set; } = null!;
-    public DbSet<CoverJobFailure> GenerateCoverJobFailureResults { get; set; } = null!;
+    public DbSet<CoverJob> CoverJobs { get; set; } = null!;
+    public DbSet<CoverJobSuccess> CoverJobSuccessResults { get; set; } = null!;
+    public DbSet<CoverJobFailure> CoverJobFailureResults { get; set; } = null!;
 
     public DbSet<CoverMeta> CoverMetas { get; set; } = null!;
     public DbSet<CoverVoteMeta> CoverVoteMetas { get; set; } = null!;
+
+    public DbSet<Webhook> Webhooks { get; set; } = null!;
+    public DbSet<CoverJobWebhook> CoverJobWebhooks { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,5 +51,23 @@ public class ScenematicNpgsqlDataContext(DbContextOptions<ScenematicNpgsqlDataCo
             .HasOne(j => j.FailureResult)
             .WithOne()
             .HasForeignKey<CoverJobFailure>(fa => fa.JobId);
+
+        modelBuilder.Entity<CoverJob>()
+            .HasMany(j => j.Webhooks)
+            .WithOne(w => w.Job)
+            .HasForeignKey(w => w.JobId);
+
+        modelBuilder.Entity<CoverJobWebhook>()
+            .HasKey(wj => new { wj.JobId, wj.WebhookId });
+
+        modelBuilder.Entity<CoverJobWebhook>()
+            .HasOne(wj => wj.Job)
+            .WithMany(j => j.Webhooks)
+            .HasForeignKey(wj => wj.JobId);
+
+        modelBuilder.Entity<CoverJobWebhook>()
+            .HasOne(wj => wj.Webhook)
+            .WithMany()
+            .HasForeignKey(wj => wj.WebhookId);
     }
 }

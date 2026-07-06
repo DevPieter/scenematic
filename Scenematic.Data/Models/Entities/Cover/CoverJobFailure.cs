@@ -11,4 +11,15 @@ public class CoverJobFailure
 
     [MaxLength(4000)]
     public string? ErrorMessage { get; init; }
+
+    private CoverJobFailure()
+    {
+    }
+
+    public CoverJobFailure(Guid jobId, GenerateCoverJobFailureReason failureReason, string? errorMessage)
+    {
+        JobId = jobId;
+        FailureReason = failureReason;
+        ErrorMessage = errorMessage;
+    }
 }
