@@ -1,19 +1,23 @@
 using System.Text.Json;
+using Microsoft.Extensions.Options;
+using Scenematic.Bucket;
 using Scenematic.Worker.CoverGenerator.Enums;
 using Scenematic.Worker.CoverGenerator.Models;
 using Scenematic.Worker.CoverGenerator.Models.Covers;
 using Scenematic.Worker.CoverGenerator.Rendering.Overlays;
 using Scenematic.Worker.CoverGenerator.Rendering.Scenes;
 using SkiaSharp;
-using Scenematic.Bucket.Buckets;
-using Scenematic.Bucket.Models.Covers;
+using Scenematic.Bucket.Models.PutItem;
 using Scenematic.Common.Enums;
+using Scenematic.Worker.CoverGenerator.Options;
 
 namespace Scenematic.Worker.CoverGenerator.Processors;
 
 public class CoverProcessor(
     HttpClient client,
-    ICoverBucket bucket,
+    // ICoverBucket bucket,
+    IBucket bucket,
+    IOptions<BucketOptions> bucketOptions,
     ILogger<CoverProcessor> logger
 )
 {
@@ -248,31 +252,44 @@ public class CoverProcessor(
             }
 
             UpdateLockFileStage(args.JobId, ProcessCoverStage.Uploading);
+            var bucketName = bucketOptions.Value.Cover.Bucket;
 
             try
             {
-                var uploadMainCoverTask = bucket.PutCoverAsync(new PutCoverArgs(
-                        Group: $"{args.JobId}",
-                        Extension: "webp",
-                        LocalPath: localMainCoverPath,
+                var uploadMainCoverTask = bucket.UploadItemAsync(
+                    localPath: localMainCoverPath,
+                    cancellationToken: cancellationToken,
+                    args: new PutItemArgs(
+                        Bucket: bucketName,
+                        Path: $"{args.JobId}",
+                        FileName: "cover",
+                        Extension: ".webp",
                         ContentType: "image/webp"
-                    ), cancellationToken
+                    )
                 );
 
-                var uploadDebounceCoverTask = bucket.PutCoverAsync(new PutCoverArgs(
-                        Group: $"{args.JobId}",
-                        Extension: "webp",
-                        LocalPath: localDebounceCoverPath,
+                var uploadDebounceCoverTask = bucket.UploadItemAsync(
+                    localPath: localDebounceCoverPath,
+                    cancellationToken: cancellationToken,
+                    args: new PutItemArgs(
+                        Bucket: bucketName,
+                        Path: $"{args.JobId}",
+                        FileName: "debounce_cover",
+                        Extension: ".webp",
                         ContentType: "image/webp"
-                    ), cancellationToken
+                    )
                 );
 
-                var uploadProcessingCoverTask = bucket.PutCoverAsync(new PutCoverArgs(
-                        Group: $"{args.JobId}",
-                        Extension: "webp",
-                        LocalPath: localProcessingCoverPath,
+                var uploadProcessingCoverTask = bucket.UploadItemAsync(
+                    localPath: localProcessingCoverPath,
+                    cancellationToken: cancellationToken,
+                    args: new PutItemArgs(
+                        Bucket: bucketName,
+                        Path: $"{args.JobId}",
+                        FileName: "processing_cover",
+                        Extension: ".webp",
                         ContentType: "image/webp"
-                    ), cancellationToken
+                    )
                 );
 
                 await Task.WhenAll(

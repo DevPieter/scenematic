@@ -50,10 +50,10 @@ if (app.Environment.IsDevelopment())
 
 app.MapControllers();
 
-app.MapPost("generate-cover", async (
+app.MapPost("api/v1/generate-cover", async (
     CoverGeneratorJobService jobService,
     ISendEndpointProvider sendEndpointProvider,
-    RegisterCoverRequest request
+    GenerateCoverRequest request
 ) =>
 {
     var hash = CoverGeneratorJobService.GenerateCoverMetaHash(

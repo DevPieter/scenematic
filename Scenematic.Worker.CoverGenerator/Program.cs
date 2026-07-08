@@ -1,19 +1,17 @@
 using MassTransit;
 using Scenematic.Bucket.MinIO.Extensions;
 using Scenematic.Bucket.MinIO.Options;
-using Scenematic.Bucket.Extensions;
 using Scenematic.Data.Postgres.Extensions;
 using Scenematic.Logic.Services;
 using Scenematic.Queue;
 using Scenematic.Queue.RabbitMQ.Extensions;
 using Scenematic.Queue.RabbitMQ.Options;
 using Scenematic.Worker.CoverGenerator.Consumers;
+using Scenematic.Worker.CoverGenerator.Options;
 using Scenematic.Worker.CoverGenerator.Processors;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.ConfigureHostOptions(options => { options.ShutdownTimeout = TimeSpan.FromSeconds(20); });
-
-builder.RegisterBucketOptions("Scenematic:Bucket");
 
 var connectionString = builder.Configuration.GetConnectionString("Scenematic");
 if (string.IsNullOrEmpty(connectionString))
@@ -27,6 +25,8 @@ var minioOptions = builder.Configuration.GetSection("Scenematic:MinIO").Get<Mini
 if (minioOptions is null)
     throw new InvalidOperationException("Scenematic MinIOOptions is not configured.");
 
+builder.Services.Configure<BucketOptions>(builder.Configuration.GetSection("Scenematic:Bucket"));
+
 builder.Services.UseScenematicNpgsqlContext(connectionString);
 builder.Services.UseScenematicRabbitMq(
     rabbitMqOptions,
@@ -38,7 +38,7 @@ builder.Services.UseScenematicRabbitMq(
         }).Endpoint(e => e.Name = ScenematicQueueNames.GenerateCover);
     }
 );
-builder.Services.UseScenematicMinIO(minioOptions);
+builder.Services.UseScenematicMinio(minioOptions);
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<CoverProcessor>();

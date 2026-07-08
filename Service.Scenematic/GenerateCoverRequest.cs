@@ -3,7 +3,7 @@ using Scenematic.Data.Models.DTOs.Cover;
 
 namespace Service.Scenematic;
 
-public record RegisterCoverRequest(
+public record GenerateCoverRequest(
     string Title,
     string Artist,
     [ValidWebUrl]

@@ -1,4 +1,4 @@
-﻿namespace Scenematic.Bucket.Options;
+﻿namespace Scenematic.Worker.CoverGenerator.Options;
 
 public class BucketOptions
 {
