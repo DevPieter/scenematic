@@ -1,7 +1,6 @@
 ﻿namespace Scenematic.Queue.Contracts.GenerateCoverJobs;
 
-public record GenerateCoverJobFailed(
+public record GenerateCoverResult(
     Guid JobId,
-    string Reason,
-    string Message
+    bool Success
 );

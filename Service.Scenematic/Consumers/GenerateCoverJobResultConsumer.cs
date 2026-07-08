@@ -5,23 +5,32 @@ using Scenematic.Queue.Contracts.GenerateCoverJobs;
 
 namespace Service.Scenematic.Consumers;
 
-public class GenerateCoverJobCompletedConsumer(
+public class GenerateCoverJobResultConsumer(
     ICoverJobRepository repository,
+    CoverGeneratorJobService service,
     WebhookService webhookService,
-    ILogger<GenerateCoverJobCompletedConsumer> logger
-)
-    : IConsumer<GenerateCoverJobCompleted>
+    ILogger<GenerateCoverJobResultConsumer> logger
+) : IConsumer<GenerateCoverResult>
 {
-    // TODO - Generalize event, one event for both success and failure
-
-    public async Task Consume(ConsumeContext<GenerateCoverJobCompleted> context)
+    public async Task Consume(ConsumeContext<GenerateCoverResult> context)
     {
+        if (!context.Message.Success) return;
+
+        var jobResult = await service.GetByIdAsync(
+            jobId: context.Message.JobId,
+            includeResults: true
+        );
+        if (jobResult.IsError || jobResult.Data is null) return;
+
+        var success = jobResult.Data.SuccessResult;
+        if (success is null) return;
+
         logger.LogInformation(
             "Generate cover job completed: {JobId}, MainCoverPath: {MainCoverPath}, DebounceCoverPath: {DebounceCoverPath}, ProcessingCoverPath: {ProcessingCoverPath}",
             context.Message.JobId,
-            context.Message.MainCoverPath,
-            context.Message.DebounceCoverPath,
-            context.Message.ProcessingCoverPath
+            success.MainCoverPath,
+            success.DebounceCoverPath,
+            success.ProcessingCoverPath
         );
 
         var webhooks = await repository.GetWebhooksAsync(context.Message.JobId);
@@ -33,9 +42,9 @@ public class GenerateCoverJobCompletedConsumer(
                 var result = await webhookService.SendWebhookAsync(webhook, new
                 {
                     context.Message.JobId,
-                    context.Message.MainCoverPath,
-                    context.Message.DebounceCoverPath,
-                    context.Message.ProcessingCoverPath
+                    success.MainCoverPath,
+                    success.DebounceCoverPath,
+                    success.ProcessingCoverPath
                 });
 
                 logger.LogInformation(

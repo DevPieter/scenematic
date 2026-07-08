@@ -30,9 +30,7 @@ builder.Services.UseScenematicRabbitMq(
     rabbitMqOptions,
     x =>
     {
-        x.AddConsumer<GenerateCoverJobCompletedConsumer>()
-            .Endpoint(e => e.Name = ScenematicQueueNames.GenerateCover);
-        x.AddConsumer<GenerateCoverJobFailedConsumer>()
+        x.AddConsumer<GenerateCoverJobResultConsumer>()
             .Endpoint(e => e.Name = ScenematicQueueNames.GenerateCover);
     }
 );
@@ -113,7 +111,7 @@ app.MapPost("api/v1/generate-cover", async (
     await jobService.MarkQueuedAsync(job.Data.Id);
 
     var endpoint = await sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{ScenematicQueueNames.GenerateCover}"));
-    await endpoint.Send(new GenerateCoverJobRequested(job.Data.Id));
+    await endpoint.Send(new GenerateCoverRequested(job.Data.Id));
 
     return Results.Accepted(
         $"/generate-cover-jobs/{job.Data.Id}",

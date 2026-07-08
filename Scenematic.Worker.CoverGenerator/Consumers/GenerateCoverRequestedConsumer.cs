@@ -6,38 +6,22 @@ using Scenematic.Logic.Services;
 using Scenematic.Worker.CoverGenerator.Models.Covers;
 using Scenematic.Worker.CoverGenerator.Processors;
 using Scenematic.Queue.Contracts.GenerateCoverJobs;
+using Scenematic.Worker.CoverGenerator.Enums;
 
 namespace Scenematic.Worker.CoverGenerator.Consumers;
 
-public class GenerateCoverJobRequestedConsumer(
+public class GenerateCoverRequestedConsumer(
     IServiceScopeFactory scopeFactory,
-    ILogger<GenerateCoverJobRequestedConsumer> logger
-) : IConsumer<GenerateCoverJobRequested>
+    ILogger<GenerateCoverRequestedConsumer> logger
+) : IConsumer<GenerateCoverRequested>
 {
-    private record SuccessObject(string MainCoverPath, string DebounceCoverPath, string ProcessingCoverPath);
-
-    private record FailureObject(GenerateCoverJobFailureReason Reason, string Message);
-
-    private enum ProcessJobOutcome
+    public async Task Consume(ConsumeContext<GenerateCoverRequested> context)
     {
-        Completed,
-        Failed,
-        Ignored
-    }
-
-    private record ProcessJobResult(
-        ProcessJobOutcome Outcome,
-        SuccessObject? SuccessData = null,
-        FailureObject? FailureData = null
-    );
-
-    public async Task Consume(ConsumeContext<GenerateCoverJobRequested> context)
-    {
-        var jobId = context.Message.JobId;
-
         using var scope = scopeFactory.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<CoverGeneratorJobService>();
         var processor = scope.ServiceProvider.GetRequiredService<CoverProcessor>();
+
+        var jobId = context.Message.JobId;
 
         try
         {
@@ -48,26 +32,19 @@ public class GenerateCoverJobRequestedConsumer(
                 context.CancellationToken
             );
 
-            switch (result.Outcome)
+            switch (result)
             {
                 case ProcessJobOutcome.Completed:
-                    var successData = result.SuccessData!;
-
-                    await context.Publish(new GenerateCoverJobCompleted(
-                        jobId,
-                        successData.MainCoverPath,
-                        successData.DebounceCoverPath,
-                        successData.ProcessingCoverPath
+                    await context.Publish(new GenerateCoverResult(
+                        JobId: jobId,
+                        Success: true
                     ));
                     break;
 
-                case ProcessJobOutcome.Failed:
-                    var failureData = result.FailureData!;
-
-                    await context.Publish(new GenerateCoverJobFailed(
-                        jobId,
-                        failureData.Reason.ToString(),
-                        failureData.Message
+                case ProcessJobOutcome.Failed or ProcessJobOutcome.NotFound:
+                    await context.Publish(new GenerateCoverResult(
+                        JobId: jobId,
+                        Success: false
                     ));
                     break;
 
@@ -82,14 +59,17 @@ public class GenerateCoverJobRequestedConsumer(
         }
     }
 
-    private async Task<ProcessJobResult> ProcessAsync(
+    private async Task<ProcessJobOutcome> ProcessAsync(
         Guid jobId,
         CoverGeneratorJobService jobService,
         CoverProcessor processor,
         CancellationToken cancellationToken
     )
     {
-        var jobResult = await jobService.GetByIdAsync(jobId, includeMetadata: true);
+        var jobResult = await jobService.GetByIdAsync(
+            jobId: jobId,
+            includeMetadata: true
+        );
 
         if (jobResult.Type == ResultType.NotFound)
         {
@@ -99,13 +79,7 @@ public class GenerateCoverJobRequestedConsumer(
                 jobResult.Message
             );
 
-            return new ProcessJobResult(
-                ProcessJobOutcome.Failed,
-                FailureData: new FailureObject(
-                    GenerateCoverJobFailureReason.NotFound,
-                    jobResult.Message ?? "Job not found"
-                )
-            );
+            return ProcessJobOutcome.NotFound;
         }
 
         if (jobResult.IsError)
@@ -129,12 +103,14 @@ public class GenerateCoverJobRequestedConsumer(
                 jobId
             );
 
-            return await MarkFailedAsync(
+            await MarkFailedAsync(
                 jobId,
                 jobService,
                 GenerateCoverJobFailureReason.InternalError,
-                "Job data is null"
+                "Cover generation job returned success but data is null"
             );
+
+            return ProcessJobOutcome.Failed;
         }
 
         if (job.State is GenerateCoverJobState.Completed or GenerateCoverJobState.Failed)
@@ -145,24 +121,11 @@ public class GenerateCoverJobRequestedConsumer(
                 job.State
             );
 
-            return new ProcessJobResult(ProcessJobOutcome.Ignored);
+            return ProcessJobOutcome.Ignored;
         }
 
         logger.LogInformation("Processing cover generation job {JobId}", jobId);
-
-        var markStartedResult = await jobService.MarkStartedAsync(jobId);
-        if (markStartedResult.IsError)
-        {
-            logger.LogError(
-                "Failed to mark job {JobId} as started: {Message}",
-                jobId,
-                markStartedResult.Message
-            );
-
-            throw new InvalidOperationException(
-                markStartedResult.Message ?? $"Failed to mark job {jobId} as started"
-            );
-        }
+        await MarkStartedAsync(jobId, jobService);
 
         var result = await processor.ProcessAsync(new ProcessCoverArgs(
                 JobId: jobId,
@@ -186,12 +149,14 @@ public class GenerateCoverJobRequestedConsumer(
                 result.Message
             );
 
-            return await MarkFailedAsync(
+            await MarkFailedAsync(
                 jobId,
                 jobService,
                 result.FailureReason,
                 result.Message ?? "Unknown error"
             );
+
+            return ProcessJobOutcome.Failed;
         }
 
         logger.LogInformation("Cover generation job {JobId} completed successfully", jobId);
@@ -207,45 +172,50 @@ public class GenerateCoverJobRequestedConsumer(
                 jobId
             );
 
-            return await MarkFailedAsync(
+            await MarkFailedAsync(
                 jobId,
                 jobService,
                 GenerateCoverJobFailureReason.InternalError,
                 "Cover processor returned invalid result paths"
             );
+
+            return ProcessJobOutcome.Failed;
         }
 
-        var markResult = await jobService.MarkCompletedAsync(
-            jobId: jobId,
-            mainCoverPath: result.MainCoverPath,
-            debounceCoverPath: result.DebounceCoverPath,
-            processingCoverPath: result.ProcessingCoverPath
+        await MarkSuccessAsync(
+            jobId,
+            jobService,
+            result.MainCoverPath,
+            result.DebounceCoverPath,
+            result.ProcessingCoverPath
         );
 
-        if (markResult.IsError)
-        {
-            logger.LogError(
-                "Failed to mark job {JobId} as completed: {Message}",
-                jobId,
-                markResult.Message
-            );
+        return ProcessJobOutcome.Completed;
+    }
 
-            throw new InvalidOperationException(
-                markResult.Message ?? $"Failed to mark job {jobId} as completed"
-            );
-        }
+    private async Task MarkStartedAsync(
+        Guid jobId,
+        CoverGeneratorJobService jobService
+    )
+    {
+        var markResult = await jobService.MarkStartedAsync(
+            jobId: jobId
+        );
 
-        return new ProcessJobResult(
-            ProcessJobOutcome.Completed,
-            new SuccessObject(
-                result.MainCoverPath,
-                result.DebounceCoverPath,
-                result.ProcessingCoverPath
-            )
+        if (markResult.IsSuccess) return;
+
+        logger.LogError(
+            "Failed to mark job {JobId} as started: {Message}",
+            jobId,
+            markResult.Message
+        );
+
+        throw new InvalidOperationException(
+            markResult.Message ?? $"Failed to mark job {jobId} as started"
         );
     }
 
-    private async Task<ProcessJobResult> MarkFailedAsync(
+    private async Task MarkFailedAsync(
         Guid jobId,
         CoverGeneratorJobService jobService,
         GenerateCoverJobFailureReason reason,
@@ -253,27 +223,49 @@ public class GenerateCoverJobRequestedConsumer(
     )
     {
         var markResult = await jobService.MarkFailedAsync(
-            jobId,
-            reason,
-            message
+            jobId: jobId,
+            reason: reason,
+            errorMessage: message
         );
 
-        if (markResult.IsError)
-        {
-            logger.LogError(
-                "Failed to mark job {JobId} as failed: {Message}",
-                jobId,
-                markResult.Message
-            );
+        if (markResult.IsSuccess) return;
 
-            throw new InvalidOperationException(
-                markResult.Message ?? $"Failed to mark job {jobId} as failed"
-            );
-        }
+        logger.LogError(
+            "Failed to mark job {JobId} as failed: {Message}",
+            jobId,
+            markResult.Message
+        );
 
-        return new ProcessJobResult(
-            ProcessJobOutcome.Failed,
-            FailureData: new FailureObject(reason, message)
+        throw new InvalidOperationException(
+            markResult.Message ?? $"Failed to mark job {jobId} as failed"
+        );
+    }
+
+    private async Task MarkSuccessAsync(
+        Guid jobId,
+        CoverGeneratorJobService jobService,
+        string mainCoverPath,
+        string debounceCoverPath,
+        string processingCoverPath
+    )
+    {
+        var markResult = await jobService.MarkCompletedAsync(
+            jobId: jobId,
+            mainCoverPath: mainCoverPath,
+            debounceCoverPath: debounceCoverPath,
+            processingCoverPath: processingCoverPath
+        );
+
+        if (markResult.IsSuccess) return;
+
+        logger.LogError(
+            "Failed to mark job {JobId} as completed: {Message}",
+            jobId,
+            markResult.Message
+        );
+
+        throw new InvalidOperationException(
+            markResult.Message ?? $"Failed to mark job {jobId} as completed"
         );
     }
 }

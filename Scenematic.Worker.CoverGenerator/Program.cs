@@ -32,7 +32,7 @@ builder.Services.UseScenematicRabbitMq(
     rabbitMqOptions,
     x =>
     {
-        x.AddConsumer<GenerateCoverJobRequestedConsumer>((context, configurator) =>
+        x.AddConsumer<GenerateCoverRequestedConsumer>((context, configurator) =>
         {
             configurator.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(10)));
         }).Endpoint(e => e.Name = ScenematicQueueNames.GenerateCover);
