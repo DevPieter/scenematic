@@ -23,11 +23,20 @@ public interface ICoverJobRepository
         bool includeWebhooks = false
     );
 
+    Task<bool> DoesMetaHashExistAsync(
+        string metaHash
+    );
+
     Task<CoverJob?> GetByMetaHashAsync(
         string metaHash,
         bool includeMetadata = false,
         bool includeResults = false,
         bool includeWebhooks = false
+    );
+
+    Task<bool> DoesWebhookExistAsync(
+        Guid jobId,
+        string url
     );
 
     Task<List<Webhook>> GetWebhooksAsync(

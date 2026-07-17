@@ -1,7 +1,6 @@
 ﻿using Scenematic.Common.Annotations;
-using Scenematic.Data.Models.DTOs.Cover;
 
-namespace Service.Scenematic;
+namespace Service.Scenematic.Models.Requests;
 
 public record GenerateCoverRequest(
     string Title,
@@ -9,6 +8,6 @@ public record GenerateCoverRequest(
     [ValidWebUrl]
     string CoverImageUrl,
     [ValidWebUrl]
-    string CallbackUrl,
-    List<CoverVoteDto> CoverVotes
+    string? CallbackUrl,
+    List<GenerateCoverVoteRequest> CoverVotes
 );

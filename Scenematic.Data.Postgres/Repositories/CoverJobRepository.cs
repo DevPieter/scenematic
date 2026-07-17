@@ -86,6 +86,10 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
         return await query.FirstOrDefaultAsync(j => j.Id == id);
     }
 
+    public async Task<bool> DoesMetaHashExistAsync(string metaHash)
+        => await context.CoverJobs.AsNoTracking()
+            .AnyAsync(j => j.CoverMetaHash == metaHash);
+
     public async Task<CoverJob?> GetByMetaHashAsync(
         string metaHash,
         bool includeMetadata = false,
@@ -114,6 +118,12 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
 
         return await query.FirstOrDefaultAsync(j => j.CoverMetaHash == metaHash);
     }
+
+    public async Task<bool> DoesWebhookExistAsync(Guid jobId, string url)
+        => await context.CoverJobWebhooks.AsNoTracking()
+            .Where(jw => jw.JobId == jobId)
+            .Include(jw => jw.Webhook)
+            .AnyAsync(jw => jw.Webhook.Url == url);
 
     public async Task<List<Webhook>> GetWebhooksAsync(Guid jobId)
         => await context.CoverJobWebhooks.AsNoTracking()
