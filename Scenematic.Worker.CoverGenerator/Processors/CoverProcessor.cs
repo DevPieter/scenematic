@@ -25,7 +25,7 @@ public class CoverProcessor(
     private const int Width = 1200;
     private const int Height = 450;
 
-    private static async Task<SKImage?> TryDownloadImage(HttpClient client, string url)
+    public static async Task<SKImage?> TryDownloadImage(HttpClient client, string url)
     {
         try
         {
@@ -115,12 +115,12 @@ public class CoverProcessor(
                     ),
                     new Scene(
                         "Main Cover",
-                        4,
+                        3,
                         cover
                     ),
                     new Scene(
                         "Main Cover",
-                        6,
+                        2,
                         cover,
                         1
                     ).AddOverlay(new BrandingOverlay())
@@ -150,7 +150,7 @@ public class CoverProcessor(
                     ),
                     new Scene(
                         "Debounce Cover",
-                        4,
+                        3,
                         cover
                     ).AddOverlay(new SimpleTextOverlay("Waiting..."))
                 );
@@ -179,7 +179,7 @@ public class CoverProcessor(
                     ),
                     new Scene(
                         "Processing Cover",
-                        4,
+                        3,
                         cover
                     ).AddOverlay(new SimpleTextOverlay("Processing..."))
                 );

@@ -1,14 +1,21 @@
 using MassTransit;
 using Scenematic.Bucket.MinIO.Extensions;
 using Scenematic.Bucket.MinIO.Options;
+using Scenematic.Common.Enums.Songs;
+using Scenematic.Data.Models.DTOs.Cover;
 using Scenematic.Data.Postgres.Extensions;
 using Scenematic.Logic.Services;
 using Scenematic.Queue;
 using Scenematic.Queue.RabbitMQ.Extensions;
 using Scenematic.Queue.RabbitMQ.Options;
+using Scenematic.Worker.CoverGenerator;
 using Scenematic.Worker.CoverGenerator.Consumers;
+using Scenematic.Worker.CoverGenerator.Models;
 using Scenematic.Worker.CoverGenerator.Options;
 using Scenematic.Worker.CoverGenerator.Processors;
+using Scenematic.Worker.CoverGenerator.Rendering.Overlays;
+using Scenematic.Worker.CoverGenerator.Rendering.Scenes;
+using SkiaSharp;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.ConfigureHostOptions(options => { options.ShutdownTimeout = TimeSpan.FromSeconds(20); });
@@ -44,5 +51,106 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<CoverProcessor>();
 builder.Services.AddScoped<CoverGeneratorJobService>();
 
-var app = builder.Build();
-app.Run();
+// var app = builder.Build();
+// app.Run();
+
+const int Fps = 16;
+const int Width = 1200;
+const int Height = 450;
+
+var client = new HttpClient();
+using var coverImage = await CoverProcessor.TryDownloadImage(client,
+    "https://content-images.p-cdn.com/images/c9/25/bc/5b/364a48b795558b2a06608ca4/_500W_500H.jpg");
+if (coverImage is null) throw new InvalidOperationException("Could not download the preview cover image.");
+
+var votes = new List<CoverVoteDto>
+{
+    new(
+        SongVoteLevel.Love,
+        "https://cdn.discordapp.com/avatars/427388881214898177/afe3572773a32e161b177e61eebf5abc.webp?size=128"
+    ),
+    new(
+        SongVoteLevel.Love,
+        "https://cdn.discordapp.com/avatars/360790692949393410/29ee2a707b057b873f87f478d97aa488.webp?size=128"
+    ),
+    new(
+        SongVoteLevel.Like,
+        "https://cdn.discordapp.com/avatars/724694495395840030/75946b85a5775694131c2c128979bbb7.webp?size=128"
+    ),
+    new(
+        SongVoteLevel.Neutral,
+        "https://cdn.discordapp.com/avatars/1117754055104671795/a6aa9b2547fe92dd482064c66a918518.webp?size=128"
+    ),
+    new(
+        SongVoteLevel.Dislike,
+        "https://cdn.discordapp.com/avatars/699322765114867764/937caec5a8c6eb66bcef18cddd4a2be5.webp?size=128"
+    )
+};
+
+var avatarImages = new Dictionary<string, SKImage>();
+
+foreach (var vote in votes)
+{
+    var avatarImage = await CoverProcessor.TryDownloadImage(client, vote.AvatarUrl);
+    if (avatarImage is not null) avatarImages[vote.AvatarUrl] = avatarImage;
+}
+
+// string title,
+// string author,
+//     List<CoverVoteDto> votes,
+// SKImage coverImage,
+//     Dictionary<string, SKImage> avatarImages
+
+using var renderer = new Renderer(Fps, Width, Height);
+using var cover = new CoverSceneRenderer(
+    "Fake Shit",
+    "Damaxy",
+    votes,
+    coverImage,
+    avatarImages
+);
+
+// renderer.Add(
+//     new Scene(
+//         "Main Cover",
+//         3,
+//         cover
+//     ).AddOverlay(new BrandingOverlay())
+// );
+
+renderer.Add(
+    new Scene(
+        "Main Cover",
+        0,
+        cover
+    ),
+    new Scene(
+        "Main Cover",
+        3,
+        cover
+    ),
+    new Scene(
+        "Main Cover",
+        2,
+        cover,
+        1
+    ).AddOverlay(new BrandingOverlay())
+);
+
+renderer.Add(
+    new Scene(
+        "Debounce Cover",
+        0,
+        cover
+    ),
+    new Scene(
+        "Debounce Cover",
+        3,
+        cover
+    ).AddOverlay(new SimpleTextOverlay("Waiting for more votes"))
+);
+
+renderer.Initialize();
+var render = renderer.Render();
+
+await File.WriteAllBytesAsync(Path.Combine(@"C:\Users\devpi\Desktop\tijdperk", "cover-debounce.webp"), render);

@@ -2,6 +2,7 @@
 using ImageMagick;
 using ImageMagick.Formats;
 using Scenematic.Worker.CoverGenerator.Models;
+using Scenematic.Worker.CoverGenerator.Rendering;
 
 namespace Scenematic.Worker.CoverGenerator;
 
@@ -10,9 +11,12 @@ public class Renderer(int fps, int width, int height) : IDisposable
     // private const int Fps = 16;
     // private const int Width = 1200;
     // private const int Height = 450;
-    public const int Quality = 100;
+    public const int Quality = 92;
+    private const int OutputQuality = 86;
 
     private readonly List<Scene> _scenes = [];
+    private readonly HashSet<ISceneRenderer> _initializedSceneRenderers = [];
+    private readonly HashSet<IOverlayRenderer> _initializedOverlayRenderers = [];
 
     private bool _initializing;
     private bool _initialized;
@@ -40,11 +44,13 @@ public class Renderer(int fps, int width, int height) : IDisposable
                 scene
             );
 
-            scene.Renderer.Initialize(sceneContext);
+            if (_initializedSceneRenderers.Add(scene.Renderer))
+                scene.Renderer.Initialize(sceneContext);
 
             foreach (var overlay in scene.Overlays)
             {
-                overlay.Initialize(sceneContext);
+                if (_initializedOverlayRenderers.Add(overlay))
+                    overlay.Initialize(sceneContext);
             }
         }
 
@@ -60,15 +66,8 @@ public class Renderer(int fps, int width, int height) : IDisposable
         if (_rendering) throw new InvalidOperationException("Cannot dispose while rendering.");
         _disposing = true;
 
-        foreach (var scene in _scenes)
-        {
-            scene.Renderer.Dispose();
-
-            foreach (var overlay in scene.Overlays)
-            {
-                overlay.Dispose();
-            }
-        }
+        foreach (var renderer in _initializedSceneRenderers) renderer.Dispose();
+        foreach (var renderer in _initializedOverlayRenderers) renderer.Dispose();
 
         _disposed = true;
         _disposing = false;
@@ -111,6 +110,7 @@ public class Renderer(int fps, int width, int height) : IDisposable
 
                 image.AnimationDelay = (uint)(scene.DurationSeconds > 0 ? 100 / fps : 0);
                 image.AnimationTicksPerSecond = scene.DurationSeconds > 0 ? 100 : 0;
+                image.Quality = OutputQuality;
 
                 collection.Add(image.Clone());
                 frameIndex++;
@@ -125,8 +125,11 @@ public class Renderer(int fps, int width, int height) : IDisposable
         using var outputStream = new MemoryStream();
         collection.Write(outputStream, new WebPWriteDefines
         {
-            Method = 0,
-            Lossless = true
+            Method = 4,
+            Lossless = false,
+            AutoFilter = true,
+            UseSharpYuv = true,
+            ThreadLevel = true
         });
 
         Console.WriteLine($"Total rendering time: {totalStopwatch.Elapsed.TotalSeconds:F2}s");
