@@ -2,7 +2,7 @@
 
 public record GenerateCoverSuccessResultResponse(
     string MainCoverPath,
-    string DebounceCoverPath,
-    string ProcessingCoverPath,
+    // string DebounceCoverPath,
+    // string ProcessingCoverPath,
     DateTime CompletedAt
 );

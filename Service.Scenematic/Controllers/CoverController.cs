@@ -18,10 +18,10 @@ public class CoverController(
             Title: request.Title,
             Artist: request.Artist,
             CoverImageUrl: request.CoverImageUrl,
-            CoverVotes: request.CoverVotes.Select(voteRequest => new CoverVoteDto(
-                VoteLevel: voteRequest.VoteLevel,
-                AvatarUrl: voteRequest.AvatarUrl
-            )).ToList(),
+            // CoverVotes: request.CoverVotes.Select(voteRequest => new CoverVoteDto(
+            //     VoteLevel: voteRequest.VoteLevel,
+            //     AvatarUrl: voteRequest.AvatarUrl
+            // )).ToList(),
             CallbackUrl: request.CallbackUrl
         ));
 
@@ -37,8 +37,8 @@ public class CoverController(
                 ? null
                 : new GenerateCoverSuccessResultResponse(
                     MainCoverPath: job.SuccessResult.MainCoverPath,
-                    DebounceCoverPath: job.SuccessResult.DebounceCoverPath,
-                    ProcessingCoverPath: job.SuccessResult.ProcessingCoverPath,
+                    // DebounceCoverPath: job.SuccessResult.DebounceCoverPath,
+                    // ProcessingCoverPath: job.SuccessResult.ProcessingCoverPath,
                     CompletedAt: job.CompletedAt!.Value
                 ),
             FailureResult: job.FailureResult is null

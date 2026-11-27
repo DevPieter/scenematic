@@ -11,8 +11,8 @@ public class Renderer(int fps, int width, int height) : IDisposable
     // private const int Fps = 16;
     // private const int Width = 1200;
     // private const int Height = 450;
-    public const int Quality = 92;
-    private const int OutputQuality = 86;
+    public const int Quality = 95;
+    private const int OutputQuality = 95;
 
     private readonly List<Scene> _scenes = [];
     private readonly HashSet<ISceneRenderer> _initializedSceneRenderers = [];
@@ -125,10 +125,10 @@ public class Renderer(int fps, int width, int height) : IDisposable
         using var outputStream = new MemoryStream();
         collection.Write(outputStream, new WebPWriteDefines
         {
-            Method = 4,
+            Method = 2,
             Lossless = false,
-            AutoFilter = true,
-            UseSharpYuv = true,
+            // AutoFilter = true,
+            // UseSharpYuv = true,
             ThreadLevel = true
         });
 

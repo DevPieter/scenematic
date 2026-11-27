@@ -23,10 +23,10 @@ public class ScenematicNpgsqlDataContext(DbContextOptions<ScenematicNpgsqlDataCo
             .WithOne()
             .HasForeignKey<CoverJob>(j => j.CoverMetaId);
 
-        modelBuilder.Entity<CoverVoteMeta>()
-            .HasOne(j => j.CoverMeta)
-            .WithMany(cm => cm.CoverVotes)
-            .HasForeignKey(j => j.CoverMetaId);
+        // modelBuilder.Entity<CoverVoteMeta>()
+            // .HasOne(j => j.CoverMeta)
+            // .WithMany(cm => cm.CoverVotes)
+            // .HasForeignKey(j => j.CoverMetaId);
 
         modelBuilder.Entity<CoverJobSuccess>()
             .HasKey(sa => sa.JobId);

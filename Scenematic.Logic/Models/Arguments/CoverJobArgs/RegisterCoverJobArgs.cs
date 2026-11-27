@@ -6,6 +6,6 @@ public record RegisterCoverJobArgs(
     string Title,
     string Artist,
     string CoverImageUrl,
-    List<CoverVoteDto> CoverVotes,
+    // List<CoverVoteDto> CoverVotes,
     string? CallbackUrl
 );

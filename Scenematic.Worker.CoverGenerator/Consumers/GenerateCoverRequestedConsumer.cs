@@ -19,7 +19,7 @@ public class GenerateCoverRequestedConsumer(
     {
         using var scope = scopeFactory.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<CoverGeneratorJobService>();
-        var processor = scope.ServiceProvider.GetRequiredService<CoverProcessor>();
+        var processor = scope.ServiceProvider.GetRequiredService<CoverImageProcessor>();
 
         var jobId = context.Message.JobId;
 
@@ -62,7 +62,7 @@ public class GenerateCoverRequestedConsumer(
     private async Task<ProcessJobOutcome> ProcessAsync(
         Guid jobId,
         CoverGeneratorJobService jobService,
-        CoverProcessor processor,
+        CoverImageProcessor imageProcessor,
         CancellationToken cancellationToken
     )
     {
@@ -127,16 +127,16 @@ public class GenerateCoverRequestedConsumer(
         logger.LogInformation("Processing cover generation job {JobId}", jobId);
         await MarkStartedAsync(jobId, jobService);
 
-        var result = await processor.ProcessAsync(new ProcessCoverArgs(
+        var result = await imageProcessor.ProcessAsync(new ProcessCoverArgs(
                 JobId: jobId,
                 MetaHash: job.CoverMetaHash,
                 AlbumTitle: job.CoverMeta.AlbumTitle,
                 AlbumArtist: job.CoverMeta.AlbumArtist,
-                AlbumCoverImageUrl: job.CoverMeta.AlbumCoverImageUrl,
-                CoverVotes: job.CoverMeta.CoverVotes.Select(cv => new CoverVoteDto(
-                    cv.VoteLevel,
-                    cv.AvatarUrl
-                )).ToList()
+                AlbumCoverImageUrl: job.CoverMeta.AlbumCoverImageUrl
+                // CoverVotes: job.CoverMeta.CoverVotes.Select(cv => new CoverVoteDto(
+                //     cv.VoteLevel,
+                //     cv.AvatarUrl
+                // )).ToList()
             ),
             cancellationToken
         );
@@ -163,8 +163,8 @@ public class GenerateCoverRequestedConsumer(
 
         if (
             string.IsNullOrEmpty(result.MainCoverPath)
-            || string.IsNullOrEmpty(result.DebounceCoverPath)
-            || string.IsNullOrEmpty(result.ProcessingCoverPath)
+            // || string.IsNullOrEmpty(result.DebounceCoverPath)
+            // || string.IsNullOrEmpty(result.ProcessingCoverPath)
         )
         {
             logger.LogError(
@@ -185,9 +185,9 @@ public class GenerateCoverRequestedConsumer(
         await MarkSuccessAsync(
             jobId,
             jobService,
-            result.MainCoverPath,
-            result.DebounceCoverPath,
-            result.ProcessingCoverPath
+            result.MainCoverPath
+            // result.DebounceCoverPath,
+            // result.ProcessingCoverPath
         );
 
         return ProcessJobOutcome.Completed;
@@ -244,16 +244,16 @@ public class GenerateCoverRequestedConsumer(
     private async Task MarkSuccessAsync(
         Guid jobId,
         CoverGeneratorJobService jobService,
-        string mainCoverPath,
-        string debounceCoverPath,
-        string processingCoverPath
+        string mainCoverPath
+        // string debounceCoverPath,
+        // string processingCoverPath
     )
     {
         var markResult = await jobService.MarkCompletedAsync(
             jobId: jobId,
-            mainCoverPath: mainCoverPath,
-            debounceCoverPath: debounceCoverPath,
-            processingCoverPath: processingCoverPath
+            mainCoverPath: mainCoverPath
+            // debounceCoverPath: debounceCoverPath,
+            // processingCoverPath: processingCoverPath
         );
 
         if (markResult.IsSuccess) return;

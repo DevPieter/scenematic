@@ -15,7 +15,7 @@ public class CoverMeta
     [MaxLength(256)]
     public string AlbumCoverImageUrl { get; init; } = null!;
 
-    public ICollection<CoverVoteMeta> CoverVotes { get; set; } = new List<CoverVoteMeta>();
+    // public ICollection<CoverVoteMeta> CoverVotes { get; set; } = new List<CoverVoteMeta>();
 
     private CoverMeta()
     {
@@ -24,13 +24,13 @@ public class CoverMeta
     public CoverMeta(
         string albumTitle,
         string albumArtist,
-        string albumCoverImageUrl,
-        ICollection<CoverVoteMeta> coverVotes
+        string albumCoverImageUrl
+        // ICollection<CoverVoteMeta> coverVotes
     )
     {
         AlbumTitle = albumTitle;
         AlbumArtist = albumArtist;
         AlbumCoverImageUrl = albumCoverImageUrl;
-        CoverVotes = coverVotes;
+        // CoverVotes = coverVotes;
     }
 }

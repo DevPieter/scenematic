@@ -8,6 +8,6 @@ public record GenerateCoverRequest(
     [ValidWebUrl]
     string CoverImageUrl,
     [ValidWebUrl]
-    string? CallbackUrl,
-    List<GenerateCoverVoteRequest> CoverVotes
+    string? CallbackUrl
+    // List<GenerateCoverVoteRequest> CoverVotes
 );

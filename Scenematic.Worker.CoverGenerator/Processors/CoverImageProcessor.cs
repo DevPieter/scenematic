@@ -13,17 +13,16 @@ using Scenematic.Worker.CoverGenerator.Options;
 
 namespace Scenematic.Worker.CoverGenerator.Processors;
 
-public class CoverProcessor(
+public class CoverImageProcessor(
     HttpClient client,
-    // ICoverBucket bucket,
     IBucket bucket,
     IOptions<BucketOptions> bucketOptions,
-    ILogger<CoverProcessor> logger
+    ILogger<CoverImageProcessor> logger
 )
 {
     private const int Fps = 16;
     private const int Width = 1200;
-    private const int Height = 450;
+    private const int Height = 400;
 
     public static async Task<SKImage?> TryDownloadImage(HttpClient client, string url)
     {
@@ -43,8 +42,8 @@ public class CoverProcessor(
         var workDirPath = CreateFreshWorkDir(args.JobId);
 
         string bucketMainCoverPath;
-        string bucketDebounceCoverPath;
-        string bucketProcessingCoverPath;
+        // string bucketDebounceCoverPath;
+        // string bucketProcessingCoverPath;
 
         var lockFileCreated = CreateFreshLockFile(args.JobId);
         if (!lockFileCreated)
@@ -83,27 +82,27 @@ public class CoverProcessor(
             );
         }
 
-        var avatarImages = new Dictionary<string, SKImage>();
+        // var avatarImages = new Dictionary<string, SKImage>();
 
-        foreach (var vote in args.CoverVotes)
-        {
-            if (avatarImages.ContainsKey(vote.AvatarUrl)) continue;
-
-            var avatarImage = await TryDownloadImage(client, vote.AvatarUrl);
-            if (avatarImage is not null) avatarImages[vote.AvatarUrl] = avatarImage;
-        }
+        // foreach (var vote in args.CoverVotes)
+        // {
+        //     if (avatarImages.ContainsKey(vote.AvatarUrl)) continue;
+        //
+        //     var avatarImage = await TryDownloadImage(client, vote.AvatarUrl);
+        //     if (avatarImage is not null) avatarImages[vote.AvatarUrl] = avatarImage;
+        // }
 
         try
         {
             var renderMainCoverTask = new Task<byte[]>(() =>
             {
                 using var renderer = new Renderer(Fps, Width, Height);
-                var cover = new CoverSceneRenderer(
+                var cover = new CoverRenderer(
                     args.AlbumTitle,
                     args.AlbumArtist,
-                    args.CoverVotes,
-                    coverImage,
-                    avatarImages
+                    // args.CoverVotes,
+                    coverImage
+                    // avatarImages
                     /*, TODO - Specify type*/
                 );
 
@@ -130,80 +129,80 @@ public class CoverProcessor(
                 return renderer.Render();
             });
 
-            var renderDebounceCoverTask = new Task<byte[]>(() =>
-            {
-                using var renderer = new Renderer(Fps, Width, Height);
-                var cover = new CoverSceneRenderer(
-                    args.AlbumTitle,
-                    args.AlbumArtist,
-                    args.CoverVotes,
-                    coverImage,
-                    avatarImages
-                    /*, TODO - Specify type*/
-                );
-
-                renderer.Add(
-                    new Scene(
-                        "Debounce Cover",
-                        0,
-                        cover
-                    ),
-                    new Scene(
-                        "Debounce Cover",
-                        3,
-                        cover
-                    ).AddOverlay(new SimpleTextOverlay("Waiting..."))
-                );
-
-                renderer.Initialize();
-                return renderer.Render();
-            });
-
-            var renderProcessingCoverTask = new Task<byte[]>(() =>
-            {
-                using var renderer = new Renderer(Fps, Width, Height);
-                var cover = new CoverSceneRenderer(
-                    args.AlbumTitle,
-                    args.AlbumArtist,
-                    args.CoverVotes,
-                    coverImage,
-                    avatarImages
-                    /*, TODO - Specify type*/
-                );
-
-                renderer.Add(
-                    new Scene(
-                        "Processing Cover",
-                        0,
-                        cover
-                    ),
-                    new Scene(
-                        "Processing Cover",
-                        3,
-                        cover
-                    ).AddOverlay(new SimpleTextOverlay("Processing..."))
-                );
-
-                renderer.Initialize();
-                return renderer.Render();
-            });
+            // var renderDebounceCoverTask = new Task<byte[]>(() =>
+            // {
+            //     using var renderer = new Renderer(Fps, Width, Height);
+            //     var cover = new CoverSceneRenderer(
+            //         args.AlbumTitle,
+            //         args.AlbumArtist,
+            //         args.CoverVotes,
+            //         coverImage,
+            //         avatarImages
+            //         /*, TODO - Specify type*/
+            //     );
+            //
+            //     renderer.Add(
+            //         new Scene(
+            //             "Debounce Cover",
+            //             0,
+            //             cover
+            //         ),
+            //         new Scene(
+            //             "Debounce Cover",
+            //             3,
+            //             cover
+            //         ).AddOverlay(new SimpleTextOverlay("Waiting..."))
+            //     );
+            //
+            //     renderer.Initialize();
+            //     return renderer.Render();
+            // });
+            //
+            // var renderProcessingCoverTask = new Task<byte[]>(() =>
+            // {
+            //     using var renderer = new Renderer(Fps, Width, Height);
+            //     var cover = new CoverSceneRenderer(
+            //         args.AlbumTitle,
+            //         args.AlbumArtist,
+            //         args.CoverVotes,
+            //         coverImage,
+            //         avatarImages
+            //         /*, TODO - Specify type*/
+            //     );
+            //
+            //     renderer.Add(
+            //         new Scene(
+            //             "Processing Cover",
+            //             0,
+            //             cover
+            //         ),
+            //         new Scene(
+            //             "Processing Cover",
+            //             3,
+            //             cover
+            //         ).AddOverlay(new SimpleTextOverlay("Processing..."))
+            //     );
+            //
+            //     renderer.Initialize();
+            //     return renderer.Render();
+            // });
 
             UpdateLockFileStage(args.JobId, ProcessCoverStage.Rendering);
 
             try
             {
                 renderMainCoverTask.Start();
-                renderDebounceCoverTask.Start();
-                renderProcessingCoverTask.Start();
+                // renderDebounceCoverTask.Start();
+                // renderProcessingCoverTask.Start();
 
                 await Task.WhenAll(
-                    renderMainCoverTask,
-                    renderDebounceCoverTask,
-                    renderProcessingCoverTask
+                    renderMainCoverTask
+                    // renderDebounceCoverTask,
+                    // renderProcessingCoverTask
                 );
 
                 coverImage.Dispose();
-                foreach (var avatarImage in avatarImages.Values) avatarImage.Dispose();
+                // foreach (var avatarImage in avatarImages.Values) avatarImage.Dispose();
             }
             catch (Exception ex)
             {
@@ -219,8 +218,8 @@ public class CoverProcessor(
             UpdateLockFileStage(args.JobId, ProcessCoverStage.Writing);
 
             var localMainCoverPath = Path.Combine(workDirPath, "main_cover.webp");
-            var localDebounceCoverPath = Path.Combine(workDirPath, "debounce_cover.webp");
-            var localProcessingCoverPath = Path.Combine(workDirPath, "processing_cover.webp");
+            // var localDebounceCoverPath = Path.Combine(workDirPath, "debounce_cover.webp");
+            // var localProcessingCoverPath = Path.Combine(workDirPath, "processing_cover.webp");
 
             try
             {
@@ -229,16 +228,16 @@ public class CoverProcessor(
                     renderMainCoverTask.Result,
                     cancellationToken
                 );
-                await File.WriteAllBytesAsync(
-                    localDebounceCoverPath,
-                    renderDebounceCoverTask.Result,
-                    cancellationToken
-                );
-                await File.WriteAllBytesAsync(
-                    localProcessingCoverPath,
-                    renderProcessingCoverTask.Result,
-                    cancellationToken
-                );
+                // await File.WriteAllBytesAsync(
+                //     localDebounceCoverPath,
+                //     renderDebounceCoverTask.Result,
+                //     cancellationToken
+                // );
+                // await File.WriteAllBytesAsync(
+                //     localProcessingCoverPath,
+                //     renderProcessingCoverTask.Result,
+                //     cancellationToken
+                // );
             }
             catch (Exception ex)
             {
@@ -268,39 +267,39 @@ public class CoverProcessor(
                     )
                 );
 
-                var uploadDebounceCoverTask = bucket.UploadItemAsync(
-                    localPath: localDebounceCoverPath,
-                    cancellationToken: cancellationToken,
-                    args: new PutItemArgs(
-                        Bucket: bucketName,
-                        Path: $"{args.JobId}",
-                        FileName: "debounce_cover",
-                        Extension: ".webp",
-                        ContentType: "image/webp"
-                    )
-                );
+                // var uploadDebounceCoverTask = bucket.UploadItemAsync(
+                //     localPath: localDebounceCoverPath,
+                //     cancellationToken: cancellationToken,
+                //     args: new PutItemArgs(
+                //         Bucket: bucketName,
+                //         Path: $"{args.JobId}",
+                //         FileName: "debounce_cover",
+                //         Extension: ".webp",
+                //         ContentType: "image/webp"
+                //     )
+                // );
 
-                var uploadProcessingCoverTask = bucket.UploadItemAsync(
-                    localPath: localProcessingCoverPath,
-                    cancellationToken: cancellationToken,
-                    args: new PutItemArgs(
-                        Bucket: bucketName,
-                        Path: $"{args.JobId}",
-                        FileName: "processing_cover",
-                        Extension: ".webp",
-                        ContentType: "image/webp"
-                    )
-                );
+                // var uploadProcessingCoverTask = bucket.UploadItemAsync(
+                //     localPath: localProcessingCoverPath,
+                //     cancellationToken: cancellationToken,
+                //     args: new PutItemArgs(
+                //         Bucket: bucketName,
+                //         Path: $"{args.JobId}",
+                //         FileName: "processing_cover",
+                //         Extension: ".webp",
+                //         ContentType: "image/webp"
+                //     )
+                // );
 
                 await Task.WhenAll(
-                    uploadMainCoverTask,
-                    uploadDebounceCoverTask,
-                    uploadProcessingCoverTask
+                    uploadMainCoverTask
+                    // uploadDebounceCoverTask,
+                    // uploadProcessingCoverTask
                 );
 
                 var mainUploadResult = uploadMainCoverTask.Result;
-                var debounceUploadResult = uploadDebounceCoverTask.Result;
-                var processUploadCoverResult = uploadProcessingCoverTask.Result;
+                // var debounceUploadResult = uploadDebounceCoverTask.Result;
+                // var processUploadCoverResult = uploadProcessingCoverTask.Result;
 
                 if (mainUploadResult.IsError)
                 {
@@ -339,83 +338,83 @@ public class CoverProcessor(
                     );
                 }
 
-                if (debounceUploadResult.IsError)
-                {
-                    logger.LogError(
-                        "Failed to upload debounce cover for job {JobId}. Error: {Error}",
-                        args.JobId,
-                        debounceUploadResult.Message
-                    );
-                    UpdateLockFileStage(
-                        args.JobId,
-                        ProcessCoverStage.Failed,
-                        $"Failed to upload debounce cover: {debounceUploadResult.Message}"
-                    );
-
-                    return ProcessCoverResult.Failure(
-                        GenerateCoverJobFailureReason.UploadingFailed,
-                        $"Failed to upload debounce cover: {debounceUploadResult.Message}"
-                    );
-                }
-
-                if (debounceUploadResult.Data is null || string.IsNullOrEmpty(debounceUploadResult.Data.Path))
-                {
-                    logger.LogError(
-                        "Debounce cover upload for job {JobId} did not return a valid path.",
-                        args.JobId
-                    );
-                    UpdateLockFileStage(
-                        args.JobId,
-                        ProcessCoverStage.Failed,
-                        "Debounce cover upload did not return a valid path."
-                    );
-
-                    return ProcessCoverResult.Failure(
-                        GenerateCoverJobFailureReason.UploadingFailed,
-                        "Debounce cover upload did not return a valid path."
-                    );
-                }
-
-                if (processUploadCoverResult.IsError)
-                {
-                    logger.LogError(
-                        "Failed to upload processing cover for job {JobId}. Error: {Error}",
-                        args.JobId,
-                        processUploadCoverResult.Message
-                    );
-                    UpdateLockFileStage(
-                        args.JobId,
-                        ProcessCoverStage.Failed,
-                        $"Failed to upload processing cover: {processUploadCoverResult.Message}"
-                    );
-
-                    return ProcessCoverResult.Failure(
-                        GenerateCoverJobFailureReason.UploadingFailed,
-                        $"Failed to upload processing cover: {processUploadCoverResult.Message}"
-                    );
-                }
-
-                if (processUploadCoverResult.Data is null || string.IsNullOrEmpty(processUploadCoverResult.Data.Path))
-                {
-                    logger.LogError(
-                        "Processing cover upload for job {JobId} did not return a valid path.",
-                        args.JobId
-                    );
-                    UpdateLockFileStage(
-                        args.JobId,
-                        ProcessCoverStage.Failed,
-                        "Processing cover upload did not return a valid path."
-                    );
-
-                    return ProcessCoverResult.Failure(
-                        GenerateCoverJobFailureReason.UploadingFailed,
-                        "Processing cover upload did not return a valid path."
-                    );
-                }
+                // if (debounceUploadResult.IsError)
+                // {
+                //     logger.LogError(
+                //         "Failed to upload debounce cover for job {JobId}. Error: {Error}",
+                //         args.JobId,
+                //         debounceUploadResult.Message
+                //     );
+                //     UpdateLockFileStage(
+                //         args.JobId,
+                //         ProcessCoverStage.Failed,
+                //         $"Failed to upload debounce cover: {debounceUploadResult.Message}"
+                //     );
+                //
+                //     return ProcessCoverResult.Failure(
+                //         GenerateCoverJobFailureReason.UploadingFailed,
+                //         $"Failed to upload debounce cover: {debounceUploadResult.Message}"
+                //     );
+                // }
+                //
+                // if (debounceUploadResult.Data is null || string.IsNullOrEmpty(debounceUploadResult.Data.Path))
+                // {
+                //     logger.LogError(
+                //         "Debounce cover upload for job {JobId} did not return a valid path.",
+                //         args.JobId
+                //     );
+                //     UpdateLockFileStage(
+                //         args.JobId,
+                //         ProcessCoverStage.Failed,
+                //         "Debounce cover upload did not return a valid path."
+                //     );
+                //
+                //     return ProcessCoverResult.Failure(
+                //         GenerateCoverJobFailureReason.UploadingFailed,
+                //         "Debounce cover upload did not return a valid path."
+                //     );
+                // }
+                //
+                // if (processUploadCoverResult.IsError)
+                // {
+                //     logger.LogError(
+                //         "Failed to upload processing cover for job {JobId}. Error: {Error}",
+                //         args.JobId,
+                //         processUploadCoverResult.Message
+                //     );
+                //     UpdateLockFileStage(
+                //         args.JobId,
+                //         ProcessCoverStage.Failed,
+                //         $"Failed to upload processing cover: {processUploadCoverResult.Message}"
+                //     );
+                //
+                //     return ProcessCoverResult.Failure(
+                //         GenerateCoverJobFailureReason.UploadingFailed,
+                //         $"Failed to upload processing cover: {processUploadCoverResult.Message}"
+                //     );
+                // }
+                //
+                // if (processUploadCoverResult.Data is null || string.IsNullOrEmpty(processUploadCoverResult.Data.Path))
+                // {
+                //     logger.LogError(
+                //         "Processing cover upload for job {JobId} did not return a valid path.",
+                //         args.JobId
+                //     );
+                //     UpdateLockFileStage(
+                //         args.JobId,
+                //         ProcessCoverStage.Failed,
+                //         "Processing cover upload did not return a valid path."
+                //     );
+                //
+                //     return ProcessCoverResult.Failure(
+                //         GenerateCoverJobFailureReason.UploadingFailed,
+                //         "Processing cover upload did not return a valid path."
+                //     );
+                // }
 
                 bucketMainCoverPath = mainUploadResult.Data.Path;
-                bucketDebounceCoverPath = debounceUploadResult.Data.Path;
-                bucketProcessingCoverPath = processUploadCoverResult.Data.Path;
+                // bucketDebounceCoverPath = debounceUploadResult.Data.Path;
+                // bucketProcessingCoverPath = processUploadCoverResult.Data.Path;
 
                 logger.LogInformation("Successfully uploaded covers for job {JobId}.", args.JobId);
             }
@@ -469,8 +468,10 @@ public class CoverProcessor(
 
         return ProcessCoverResult.Success(
             mainCoverPath: bucketMainCoverPath,
-            debounceCoverPath: bucketDebounceCoverPath,
-            processingCoverPath: bucketProcessingCoverPath
+            debounceCoverPath: "",
+            processingCoverPath: ""
+            // debounceCoverPath: bucketDebounceCoverPath,
+            // processingCoverPath: bucketProcessingCoverPath
         );
     }
 

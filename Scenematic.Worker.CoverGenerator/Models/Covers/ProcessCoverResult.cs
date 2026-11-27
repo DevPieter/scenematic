@@ -8,9 +8,9 @@ public record ProcessCoverResult(
     ResultType Type,
     GenerateCoverJobFailureReason FailureReason,
     string? Message,
-    string? MainCoverPath,
-    string? DebounceCoverPath,
-    string? ProcessingCoverPath
+    string? MainCoverPath
+    // string? DebounceCoverPath,
+    // string? ProcessingCoverPath
 ) : Result(Type, Message)
 {
     public static ProcessCoverResult Success(
@@ -21,9 +21,9 @@ public record ProcessCoverResult(
         ResultType.Success,
         GenerateCoverJobFailureReason.None,
         "Successfully processed cover",
-        mainCoverPath,
-        debounceCoverPath,
-        processingCoverPath
+        mainCoverPath
+        // debounceCoverPath,
+        // processingCoverPath
     );
 
     public static ProcessCoverResult Failure(
@@ -33,8 +33,6 @@ public record ProcessCoverResult(
         ResultType.InternalError,
         failureReason,
         message,
-        null,
-        null,
         null
     );
 }

@@ -217,7 +217,8 @@ public sealed class CoverSceneRenderer : ISceneRenderer
         canvas.Save();
         canvas.ClipPath(coverPath, antialias: true);
         _coverPaint.Color = new SKColor(255, 255, 255, alpha);
-        canvas.DrawImage(_coverImage, CenterCropRect(_coverImage.Width, _coverImage.Height), _coverRect, _samplingOptions,
+        canvas.DrawImage(_coverImage, CenterCropRect(_coverImage.Width, _coverImage.Height), _coverRect,
+            _samplingOptions,
             _coverPaint);
         canvas.Restore();
 

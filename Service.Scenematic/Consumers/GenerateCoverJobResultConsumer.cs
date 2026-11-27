@@ -28,9 +28,9 @@ public class GenerateCoverJobResultConsumer(
         logger.LogInformation(
             "Generate cover job completed: {JobId}, MainCoverPath: {MainCoverPath}, DebounceCoverPath: {DebounceCoverPath}, ProcessingCoverPath: {ProcessingCoverPath}",
             context.Message.JobId,
-            success.MainCoverPath,
-            success.DebounceCoverPath,
-            success.ProcessingCoverPath
+            success.MainCoverPath
+            // success.DebounceCoverPath,
+            // success.ProcessingCoverPath
         );
 
         var webhooks = await repository.GetWebhooksAsync(context.Message.JobId);
@@ -42,9 +42,9 @@ public class GenerateCoverJobResultConsumer(
                 var result = await webhookService.SendWebhookAsync(webhook, new
                 {
                     context.Message.JobId,
-                    success.MainCoverPath,
-                    success.DebounceCoverPath,
-                    success.ProcessingCoverPath
+                    success.MainCoverPath
+                    // success.DebounceCoverPath,
+                    // success.ProcessingCoverPath
                 });
 
                 logger.LogInformation(

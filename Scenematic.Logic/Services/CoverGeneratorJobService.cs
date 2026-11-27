@@ -24,15 +24,15 @@ public class CoverGeneratorJobService(
     private static string GenerateCoverMetaHash(
         string albumTitle,
         string albumArtist,
-        string albumCoverImageUrl,
-        List<CoverVoteDto> coverVotes
+        string albumCoverImageUrl
+        // List<CoverVoteDto> coverVotes
     )
     {
-        var voteStr = string.Join("|",
-            coverVotes.OrderBy(cv => cv.AvatarUrl).Select(cv => $"{cv.VoteLevel}:{cv.AvatarUrl}")
-        );
+        // var voteStr = string.Join("|",
+        //     coverVotes.OrderBy(cv => cv.AvatarUrl).Select(cv => $"{cv.VoteLevel}:{cv.AvatarUrl}")
+        // );
 
-        var str = $"{albumTitle}|{albumArtist}|{albumCoverImageUrl}|{voteStr}";
+        var str = $"{albumTitle}|{albumArtist}|{albumCoverImageUrl}";
         var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(str));
         return Convert.ToBase64String(hashBytes);
     }
@@ -50,8 +50,8 @@ public class CoverGeneratorJobService(
         var metaHash = GenerateCoverMetaHash(
             args.Title,
             args.Artist,
-            args.CoverImageUrl,
-            args.CoverVotes
+            args.CoverImageUrl
+            // args.CoverVotes
         );
 
         var isWebhookProvided = !string.IsNullOrWhiteSpace(args.CallbackUrl); // TODO - Add more url validation
@@ -79,8 +79,8 @@ public class CoverGeneratorJobService(
                     MetaHash: metaHash,
                     AlbumTitle: args.Title,
                     AlbumArtist: args.Artist,
-                    AlbumCoverImageUrl: args.CoverImageUrl,
-                    CoverVotes: args.CoverVotes
+                    AlbumCoverImageUrl: args.CoverImageUrl
+                    // CoverVotes: args.CoverVotes
                 ));
         }
         catch (Exception ex)
@@ -342,9 +342,9 @@ public class CoverGeneratorJobService(
 
     public async Task<Result> MarkCompletedAsync(Guid jobId,
         // TODO - Get as args object, not params
-        string mainCoverPath,
-        string debounceCoverPath,
-        string processingCoverPath
+        string mainCoverPath
+        // string debounceCoverPath,
+        // string processingCoverPath
     )
     {
         try
@@ -353,9 +353,9 @@ public class CoverGeneratorJobService(
             if (job is null) return Result.NotFound("Job not found");
 
             var result = await repository.SetSuccessAsync(jobId, new SetCoverJobSuccessDto(
-                MainCoverPath: mainCoverPath,
-                DebounceCoverPath: debounceCoverPath,
-                ProcessingCoverPath: processingCoverPath
+                MainCoverPath: mainCoverPath
+                // DebounceCoverPath: debounceCoverPath,
+                // ProcessingCoverPath: processingCoverPath
             ));
 
             if (result is null)

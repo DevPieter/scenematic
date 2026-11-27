@@ -16,16 +16,16 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
         await context.CoverJobs.AddAsync(job);
         await context.SaveChangesAsync();
 
-        var coverVotes = dto.CoverVotes.ConvertAll(cv => new CoverVoteMeta(
-            voteLevel: cv.VoteLevel,
-            avatarUrl: cv.AvatarUrl
-        ));
+        // var coverVotes = dto.CoverVotes.ConvertAll(cv => new CoverVoteMeta(
+        //     voteLevel: cv.VoteLevel,
+        //     avatarUrl: cv.AvatarUrl
+        // ));
 
         var meta = new CoverMeta(
             albumTitle: dto.AlbumTitle,
             albumArtist: dto.AlbumArtist,
-            albumCoverImageUrl: dto.AlbumCoverImageUrl,
-            coverVotes: coverVotes
+            albumCoverImageUrl: dto.AlbumCoverImageUrl
+            // coverVotes: coverVotes
         );
 
         await context.CoverMetas.AddAsync(meta);
@@ -68,8 +68,8 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
 
         if (includeMetadata)
         {
-            query = query.Include(j => j.CoverMeta)
-                .ThenInclude(m => m.CoverVotes);
+            query = query.Include(j => j.CoverMeta);
+            // .ThenInclude(m => m.CoverVotes);
         }
 
         if (includeResults)
@@ -101,8 +101,8 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
 
         if (includeMetadata)
         {
-            query = query.Include(j => j.CoverMeta)
-                .ThenInclude(m => m.CoverVotes);
+            query = query.Include(j => j.CoverMeta);
+            // .ThenInclude(m => m.CoverVotes);
         }
 
         if (includeResults)
@@ -163,9 +163,9 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
 
         var result = new CoverJobSuccess(
             jobId: id,
-            mainCoverPath: dto.MainCoverPath,
-            debounceCoverPath: dto.DebounceCoverPath,
-            processingCoverPath: dto.ProcessingCoverPath
+            mainCoverPath: dto.MainCoverPath
+            // debounceCoverPath: dto.DebounceCoverPath,
+            // processingCoverPath: dto.ProcessingCoverPath
         );
 
         job.SuccessResult = result;
@@ -203,13 +203,13 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
     {
         var job = await context.CoverJobs
             .Include(j => j.CoverMeta)
-            .ThenInclude(m => m.CoverVotes)
+            // .ThenInclude(m => m.CoverVotes)
             .FirstOrDefaultAsync(j => j.Id == id);
         if (job is null) return false;
 
         if (job.CoverMeta is not null)
         {
-            context.CoverVoteMetas.RemoveRange(job.CoverMeta.CoverVotes);
+            // context.CoverVoteMetas.RemoveRange(job.CoverMeta.CoverVotes);
             context.CoverMetas.Remove(job.CoverMeta);
         }
 

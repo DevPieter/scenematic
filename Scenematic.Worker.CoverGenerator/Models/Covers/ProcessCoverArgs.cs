@@ -7,6 +7,6 @@ public record ProcessCoverArgs(
     string MetaHash,
     string AlbumTitle,
     string AlbumArtist,
-    string AlbumCoverImageUrl,
-    List<CoverVoteDto> CoverVotes
+    string AlbumCoverImageUrl
+    // List<CoverVoteDto> CoverVotes
 );
