@@ -43,6 +43,8 @@ public interface ICoverJobRepository
         Guid jobId
     );
 
+    Task MarkQueuedIfPendingAsync(Guid id);
+
     Task<bool> UpdateAsync(
         Guid id,
         UpdateCoverJobDto jobDto

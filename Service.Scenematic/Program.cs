@@ -27,7 +27,7 @@ builder.Services.UseScenematicRabbitMq(
     x =>
     {
         x.AddConsumer<GenerateCoverJobResultConsumer>()
-            .Endpoint(e => e.Name = ScenematicQueueNames.GenerateCover);
+            .Endpoint(e => e.Name = ScenematicQueueNames.GenerateCoverResult);
     }
 );
 

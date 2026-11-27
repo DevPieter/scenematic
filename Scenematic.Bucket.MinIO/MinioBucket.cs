@@ -63,11 +63,13 @@ public class MinioBucket(
         try
         {
             var objectName = args.ToObjectName();
+            await using var stream = fileInfo.OpenRead();
 
             await minioClient.PutObjectAsync(new PutObjectArgs()
                     .WithBucket(args.Bucket)
                     .WithObject(objectName)
-                    .WithFileName(localPath)
+                    .WithStreamData(stream)
+                    .WithObjectSize(stream.Length)
                     .WithContentType(args.ContentType),
                 cancellationToken
             );

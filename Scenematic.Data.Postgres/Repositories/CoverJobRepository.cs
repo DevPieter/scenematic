@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Scenematic.Common.Enums;
 using Scenematic.Data.Models.DTOs.Cover;
 using Scenematic.Data.Models.DTOs.Webhooks;
 using Scenematic.Data.Models.Entities.Cover;
@@ -131,6 +132,16 @@ public class CoverJobRepository(ScenematicNpgsqlDataContext context) : ICoverJob
             .Include(jw => jw.Webhook)
             .Select(jw => jw.Webhook)
             .ToListAsync();
+
+    public Task MarkQueuedIfPendingAsync(Guid id)
+    {
+        var queuedAt = DateTime.UtcNow;
+        return context.CoverJobs
+            .Where(job => job.Id == id && job.State == GenerateCoverJobState.Pending)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(job => job.State, GenerateCoverJobState.Queued)
+                .SetProperty(job => job.QueuedAt, job => job.QueuedAt ?? queuedAt));
+    }
 
     public async Task<bool> UpdateAsync(Guid id, UpdateCoverJobDto jobDto)
     {

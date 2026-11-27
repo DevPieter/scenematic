@@ -124,23 +124,6 @@ public class CoverGeneratorJobService(
             );
 
             await endpoint.Send(new GenerateCoverRequested(job.Id));
-
-            var markQueuedResult = await MarkQueuedAsync(job.Id);
-            if (markQueuedResult.IsSuccess)
-            {
-                return ResultObject<RegisterCoverJobResult>.Success(new RegisterCoverJobResult(
-                    Job: job,
-                    Webhook: webhook
-                ));
-            }
-
-            logger.LogError(
-                "Failed to mark cover generation job {JobId} as queued after sending GenerateCoverRequested message",
-                job.Id
-            );
-            return ResultObject<RegisterCoverJobResult>.InternalError(
-                "Failed to mark cover generation job as queued after sending GenerateCoverRequested message"
-            );
         }
         catch (Exception ex)
         {
@@ -151,6 +134,26 @@ public class CoverGeneratorJobService(
             );
             return ResultObject<RegisterCoverJobResult>.InternalError(
                 "Failed to send GenerateCoverRequested message for cover generation job"
+            );
+        }
+
+        try
+        {
+            await repository.MarkQueuedIfPendingAsync(job.Id);
+
+            var currentJob = await repository.GetByIdAsync(job.Id, includeMetadata: true, includeResults: true)
+                ?? throw new InvalidOperationException("Cover generation job could not be found after dispatch");
+
+            return ResultObject<RegisterCoverJobResult>.Success(new RegisterCoverJobResult(
+                Job: currentJob,
+                Webhook: webhook
+            ));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to update queued state for cover generation job {JobId}", job.Id);
+            return ResultObject<RegisterCoverJobResult>.InternalError(
+                "Failed to update queued state for cover generation job"
             );
         }
     }
@@ -283,33 +286,6 @@ public class CoverGeneratorJobService(
         {
             logger.LogError(ex, "Failed to get cover generation job by meta hash {MetaHash}", metaHash);
             return ResultObject<CoverJob>.InternalError("Failed to get cover generation job");
-        }
-    }
-
-    private async Task<Result> MarkQueuedAsync(Guid jobId)
-    {
-        try
-        {
-            var job = await repository.GetByIdAsync(jobId);
-            if (job is null) return Result.NotFound("Job not found");
-
-            var dto = ToUpdateDto(job);
-            dto.State = GenerateCoverJobState.Queued;
-
-            dto.QueuedAt = DateTime.UtcNow;
-            if (dto.StartedAt is not null) dto.StartedAt = null;
-            if (dto.CompletedAt is not null) dto.CompletedAt = null;
-            if (dto.FailedAt is not null) dto.FailedAt = null;
-
-            var success = await repository.UpdateAsync(jobId, dto);
-            return success
-                ? Result.Success()
-                : Result.InternalError("Failed to mark job as queued");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to mark job as queued");
-            return Result.InternalError("Failed to mark job as queued");
         }
     }
 
